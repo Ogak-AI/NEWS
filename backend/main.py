@@ -22,6 +22,11 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "Veritas AI backend"}
+
+
 @app.get("/api/articles")
 def get_articles(category: str = None, db: Session = Depends(get_db)):
     q = db.query(Article).filter(Article.status == "published")
