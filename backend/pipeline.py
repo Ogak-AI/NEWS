@@ -6,7 +6,7 @@ import os
 import json
 import datetime
 from openai import OpenAI
-from openai.error import OpenAIError, RateLimitError
+from openai import OpenAIError, RateLimitError
 from dotenv import load_dotenv
 from database import SessionLocal
 from models import Source, Article
