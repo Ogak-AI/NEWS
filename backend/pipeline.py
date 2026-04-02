@@ -6,6 +6,7 @@ import os
 import json
 import datetime
 from openai import OpenAI
+from openai.error import OpenAIError, RateLimitError
 from dotenv import load_dotenv
 from database import SessionLocal
 from models import Source, Article
@@ -173,14 +174,25 @@ def run_pipeline():
 
         print(f"\n  [{category.upper()}] {len(cat_sources)} sources")
 
-        print("    Step 1: Validating facts...")
-        fact_data = validate_facts(client, cat_sources, category)
+        try:
+            print("    Step 1: Validating facts...")
+            fact_data = validate_facts(client, cat_sources, category)
 
-        print("    Step 2: Generating article...")
-        article_data = generate_article(client, fact_data, cat_sources, category, trend_tags)
+            print("    Step 2: Generating article...")
+            article_data = generate_article(client, fact_data, cat_sources, category, trend_tags)
 
-        print("    Step 3: Evaluating bias & readability...")
-        bias_score, readability_score = evaluate_bias(client, article_data.get("content", ""))
+            print("    Step 3: Evaluating bias & readability...")
+            bias_score, readability_score = evaluate_bias(client, article_data.get("content", ""))
+        except RateLimitError as exc:
+            print(f"[Pipeline] ERROR: OpenAI quota or rate limit issue: {exc}")
+            print("[Pipeline] Check OPENAI_API_KEY, plan billing, and usage. Pipeline halted.")
+            break
+        except OpenAIError as exc:
+            print(f"[Pipeline] ERROR: OpenAI API error: {exc}")
+            break
+        except Exception as exc:
+            print(f"[Pipeline] ERROR: Pipeline failure: {exc}")
+            break
 
         facts = fact_data.get("facts", [])
         depth = min(max(f.get("sources_corroborating", 1) for f in facts) if facts else 1, 5)
