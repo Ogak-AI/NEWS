@@ -47,7 +47,13 @@ export interface PipelineStatus {
   timestamp: string;
 }
 
-const BASE = import.meta.env.VITE_API_BASE || '/api';
+const BASE = (() => {
+  const envBase = import.meta.env.VITE_API_BASE as string | undefined;
+  if (!envBase) return '/api';
+
+  const base = envBase.replace(/\/api\/?$/i, '').replace(/\/+$/g, '');
+  return `${base}/api`;
+})();
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, options);
