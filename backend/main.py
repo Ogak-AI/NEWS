@@ -114,10 +114,10 @@ def trigger_ingest(background_tasks: BackgroundTasks):
 
 @app.post("/api/pipeline/run")
 def trigger_pipeline(background_tasks: BackgroundTasks):
-    if not os.getenv("OPENAI_API_KEY", "").strip():
+    if not os.getenv("OLLAMA_MODEL", "").strip():
         raise HTTPException(
             status_code=400,
-            detail="OPENAI_API_KEY is required to run the AI editorial pipeline. Set it in backend/.env."
+            detail="OLLAMA_MODEL is required to run the AI editorial pipeline. Set it in backend/.env (e.g., OLLAMA_MODEL=llama3.2)."
         )
     import pipeline
     background_tasks.add_task(pipeline.run_pipeline)
