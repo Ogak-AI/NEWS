@@ -5,7 +5,8 @@ Steps: Fact Validation → Article Generation → Bias/QC Evaluation → Publish
 import os
 import json
 import datetime
-import ollama
+from openai import OpenAI
+from openai import OpenAIError, RateLimitError
 from dotenv import load_dotenv
 from database import SessionLocal
 from models import Source, Article
@@ -14,19 +15,18 @@ from virlo import fetch_trending_hashtags
 load_dotenv()
 
 
-def _get_ollama_client():
-    model = os.getenv("OLLAMA_MODEL", "llama3.2").strip()
-    if not model:
+def _get_openai_client():
+    key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not key:
         return None
-    return ollama.Client(), model
+    return OpenAI(api_key=key)
 
 
 # ── Step 1: Fact Validation ────────────────────────────────────────────────────
 
-def validate_facts(client_model, sources: list, category: str) -> dict:
-    client, model = client_model
+def validate_facts(client, sources: list, category: str) -> dict:
     if not client:
-        raise RuntimeError("OLLAMA_MODEL is required for fact validation.")
+        raise RuntimeError("OPENAI_API_KEY is required for fact validation.")
 
     source_texts = [
         f"Publisher: {s.publisher}\nTitle: {s.title}\n\n{s.content.strip()}"
@@ -35,8 +35,8 @@ def validate_facts(client_model, sources: list, category: str) -> dict:
     combined = "\n\n---\n\n".join(source_texts)
 
     try:
-        resp = client.chat(
-            model=model,
+        resp = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a senior fact-checking editor. Be rigorous, impartial, precise."},
                 {"role": "user", "content": (
@@ -47,9 +47,9 @@ def validate_facts(client_model, sources: list, category: str) -> dict:
                     '{"facts": [{"claim": "...", "confidence": 0.9, "sources_corroborating": 2, "contradiction": false}]}'
                 )},
             ],
-            format="json",
+            response_format={"type": "json_object"},
         )
-        return json.loads(resp['message']['content'])
+        return json.loads(resp.choices[0].message.content)
     except Exception as e:
         print(f"    [LLM] Fact validation error: {e}")
         raise
@@ -57,10 +57,9 @@ def validate_facts(client_model, sources: list, category: str) -> dict:
 
 # ── Step 2: Article Generation ────────────────────────────────────────────────
 
-def generate_article(client_model, facts_data: dict, sources: list, category: str, trend_tags: list[str] | None = None) -> dict:
-    client, model = client_model
+def generate_article(client, facts_data: dict, sources: list, category: str, trend_tags: list[str] | None = None) -> dict:
     if not client:
-        raise RuntimeError("OLLAMA_MODEL is required for article generation.")
+        raise RuntimeError("OPENAI_API_KEY is required for article generation.")
 
     facts_str = json.dumps(facts_data, indent=2)
     source_texts = "\n\n---\n\n".join(
@@ -77,8 +76,8 @@ def generate_article(client_model, facts_data: dict, sources: list, category: st
         )
 
     try:
-        resp = client.chat(
-            model=model,
+        resp = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": (
                     "You are a world-class senior international correspondent. "
@@ -94,9 +93,9 @@ def generate_article(client_model, facts_data: dict, sources: list, category: st
                     'Return JSON: {"title": "...", "lede": "...", "content": "...(markdown)...", "digest": "..."}'
                 )},
             ],
-            format="json",
+            response_format={"type": "json_object"},
         )
-        return json.loads(resp['message']['content'])
+        return json.loads(resp.choices[0].message.content)
     except Exception as e:
         print(f"    [LLM] Article generation error: {e}")
         raise
@@ -104,14 +103,13 @@ def generate_article(client_model, facts_data: dict, sources: list, category: st
 
 # ── Step 3: Bias & Quality Evaluation ─────────────────────────────────────────
 
-def evaluate_bias(client_model, article_content: str) -> tuple[float, float]:
-    client, model = client_model
+def evaluate_bias(client, article_content: str) -> tuple[float, float]:
     if not client:
-        raise RuntimeError("OLLAMA_MODEL is required for bias evaluation.")
+        raise RuntimeError("OPENAI_API_KEY is required for bias evaluation.")
 
     try:
-        resp = client.chat(
-            model=model,
+        resp = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a media bias analyst. Score objectively."},
                 {"role": "user", "content": (
@@ -121,9 +119,9 @@ def evaluate_bias(client_model, article_content: str) -> tuple[float, float]:
                     'Return JSON: {"bias_score": 0.92, "readability_score": 0.88}'
                 )},
             ],
-            format="json",
+            response_format={"type": "json_object"},
         )
-        data = json.loads(resp['message']['content'])
+        data = json.loads(resp.choices[0].message.content)
         return float(data.get("bias_score", 0.85)), float(data.get("readability_score", 0.87))
     except Exception as e:
         print(f"    [LLM] Bias evaluation error: {e}")
@@ -134,9 +132,9 @@ def evaluate_bias(client_model, article_content: str) -> tuple[float, float]:
 
 def run_pipeline():
     """Run the full editorial pipeline over all ingested sources."""
-    client_model = _get_ollama_client()
-    if not client_model[0]:
-        print("[Pipeline] ERROR: OLLAMA_MODEL is not configured. The pipeline requires a local LLM model.")
+    client = _get_openai_client()
+    if not client:
+        print("[Pipeline] ERROR: OPENAI_API_KEY is not configured. The pipeline requires a real LLM credential.")
         return
 
     trend_tags: list[str] = []
