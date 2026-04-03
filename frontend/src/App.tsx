@@ -278,17 +278,11 @@ export default function App() {
                 <div className="empty-state">
                   <h3>No articles yet</h3>
                   <p>
-                    Run the seeder to ingest live news and generate your first AI articles,
-                    or click Generate to trigger the pipeline now.
+                    Click Generate to trigger the live AI news pipeline and create your first transparent reports.
                   </p>
                   <button className="empty-action-btn" onClick={handleGenerate} disabled={pipelineRunning}>
                     {pipelineRunning ? '⏳ Generating...' : '⚡ Generate First Articles'}
                   </button>
-                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 8 }}>
-                    Or run: <code style={{ color: 'var(--gold)', background: 'var(--gold-dim)', padding: '2px 6px', borderRadius: 4 }}>
-                      python seed.py
-                    </code> in the backend directory.
-                  </p>
                 </div>
               ) : (
                 articles.map((a, i) => (
