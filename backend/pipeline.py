@@ -10,6 +10,20 @@ from virlo import fetch_trending_hashtags
 
 load_dotenv()
 
+def _extract_json(raw: str) -> dict:
+    """Pull the first {...} block out of a raw LLM response and parse it.
+    Handles markdown code fences and validates the slice is non-empty."""
+    # Strip markdown code fences if present (```json ... ```)
+    text = raw.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+    start = text.find('{')
+    end   = text.rfind('}') + 1          # 0 when '}' not found
+    if start == -1 or end <= start:
+        raise ValueError(f"No valid JSON object found in response. Raw (200 chars): {raw[:200]}")
+    return json.loads(text[start:end])
+
 MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
 def _get_llm_client():
@@ -56,12 +70,7 @@ def validate_facts(client, sources: list, category: str) -> dict:
             temperature=0.1,
         )
         content = response.choices[0].message.content.strip()
-        start = content.find('{')
-        end = content.rfind('}') + 1
-        if start != -1 and end != -1:
-            return json.loads(content[start:end])
-        print(f"    [LLM] RAW CHAT RESPONSE (No JSON found): {content[:200]}...")
-        raise ValueError("No JSON found in response")
+        return _extract_json(content)
     except Exception as e:
         err_str = str(e)
         if "503" in err_str or "loading" in err_str.lower():
@@ -109,34 +118,27 @@ def generate_article(client, facts_data: dict, sources: list, category: str, tre
             temperature=0.3,
         )
         content = response.choices[0].message.content.strip()
-        start = content.find('{')
-        end = content.rfind('}') + 1
-        if start != -1 and end != -1:
-            return json.loads(content[start:end])
-        print(f"    [LLM] RAW CHAT RESPONSE (No JSON found): {content[:200]}...")
-        raise ValueError("No JSON found in response")
+        return _extract_json(content)
     except Exception as e:
         print(f"    [LLM] Article generation failed: {repr(e)}")
         raise
 
 # ── Step 3: Bias & Quality Evaluation ─────────────────────────────────────────
 def evaluate_bias(client, article_content: str) -> tuple[float, float]:
-    messages = [
-        {"role": "system", "content": "You are a media bias analyst. Score objectively. JSON only."},
-        {
-            "role": "user",
-            "content": f"Score bias (0.0=slanted, 1.0=neutral) and readability (0.0-1.0) for this article:\n\n{article_content[:2000]}\n\nReturn JSON: {{\"bias_score\": 0.9, \"readability_score\": 0.9}}"
-        }
-    ]
     try:
+        # Cast defensively — article_content must be a string before slicing
+        text = str(article_content)[:2000]
+        messages = [
+            {"role": "system", "content": "You are a media bias analyst. Score objectively. JSON only."},
+            {
+                "role": "user",
+                "content": f"Score bias (0.0=slanted, 1.0=neutral) and readability (0.0-1.0) for this article:\n\n{text}\n\nReturn JSON: {{\"bias_score\": 0.9, \"readability_score\": 0.9}}"
+            }
+        ]
         response = client.chat.completions.create(model=MODEL, messages=messages, max_tokens=500, temperature=0.1)
-        content = response.choices[0].message.content.strip()
-        start = content.find('{')
-        end = content.rfind('}') + 1
-        if start != -1 and end != -1:
-            data = json.loads(content[start:end])
-            return float(data.get("bias_score", 0.85)), float(data.get("readability_score", 0.87))
-        raise ValueError("No JSON found")
+        raw = response.choices[0].message.content.strip()
+        data = _extract_json(raw)
+        return float(data.get("bias_score", 0.85)), float(data.get("readability_score", 0.87))
     except Exception:
         return 0.85, 0.87
 
