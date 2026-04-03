@@ -1,5 +1,5 @@
 """
-pipeline.py — Veritas AI editorial pipeline (Llama-3.3-70B, World-Class Journalism Mode)
+pipeline.py — News Gamma Tan editorial pipeline (Llama-3.3-70B, World-Class Journalism Mode)
 """
 import os
 import json

@@ -1,5 +1,5 @@
 """
-virlo.py — Optional Virlo signal enrichment for Veritas AI.
+virlo.py — Optional Virlo signal enrichment for News Gamma Tan.
 Uses Virlo trending analytics to provide social signal context for article generation.
 """
 import os
