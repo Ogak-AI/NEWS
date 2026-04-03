@@ -1,5 +1,5 @@
 """
-pipeline.py — In-memory Veritas AI editorial pipeline (Zephyr Chat)
+pipeline.py — In-memory Veritas AI editorial pipeline (Llama-3.3-70B)
 """
 import os
 import json
@@ -10,12 +10,14 @@ from virlo import fetch_trending_hashtags
 
 load_dotenv()
 
+MODEL = "meta-llama/Llama-3.3-70B-Instruct"
+
 def _get_llm_client():
     key = os.getenv("HUGGINGFACE_API_KEY", "").strip()
     if not key:
         return None
-    # Zephyr-7B-Beta is a highly stable chat model for the Inference API
-    return InferenceClient(model="HuggingFaceH4/zephyr-7b-beta", token=key)
+    # Llama-3.3-70B-Instruct — actively supported on HF Inference API (2025+)
+    return InferenceClient(token=key)
 
 # ── Step 1: Fact Validation ────────────────────────────────────────────────────
 def validate_facts(client, sources: list, category: str) -> dict:
@@ -47,7 +49,8 @@ def validate_facts(client, sources: list, category: str) -> dict:
     ]
 
     try:
-        response = client.chat_completion(
+        response = client.chat.completions.create(
+            model=MODEL,
             messages=messages,
             max_tokens=2000,
             temperature=0.1,
@@ -99,7 +102,8 @@ def generate_article(client, facts_data: dict, sources: list, category: str, tre
     ]
 
     try:
-        response = client.chat_completion(
+        response = client.chat.completions.create(
+            model=MODEL,
             messages=messages,
             max_tokens=4000,
             temperature=0.3,
@@ -125,7 +129,7 @@ def evaluate_bias(client, article_content: str) -> tuple[float, float]:
         }
     ]
     try:
-        response = client.chat_completion(messages=messages, max_tokens=500, temperature=0.1)
+        response = client.chat.completions.create(model=MODEL, messages=messages, max_tokens=500, temperature=0.1)
         content = response.choices[0].message.content.strip()
         start = content.find('{')
         end = content.rfind('}') + 1
@@ -143,7 +147,7 @@ def run_pipeline(in_memory_sources: list, in_memory_articles: list):
         print("[Pipeline] ERROR: HUGGINGFACE_API_KEY not configured.")
         return
 
-    print("\n[Pipeline] Mode: Zephyr-7B-Beta (Chat API)")
+    print("\n[Pipeline] Mode: Llama-3.3-70B-Instruct (HF Chat API)")
 
     trend_tags = []
     if os.getenv("VIRLO_API_KEY", "").strip():
