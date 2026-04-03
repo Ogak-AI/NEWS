@@ -1,5 +1,5 @@
 """
-pipeline.py — In-memory Veritas AI editorial pipeline (Chat API)
+pipeline.py — In-memory Veritas AI editorial pipeline (Zephyr Chat)
 """
 import os
 import json
@@ -14,8 +14,8 @@ def _get_llm_client():
     key = os.getenv("HUGGINGFACE_API_KEY", "").strip()
     if not key:
         return None
-    # Mistral-v0.3 is best used via the chat_completion interface
-    return InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.3", token=key)
+    # Zephyr-7B-Beta is a highly stable chat model for the Inference API
+    return InferenceClient(model="HuggingFaceH4/zephyr-7b-beta", token=key)
 
 # ── Step 1: Fact Validation ────────────────────────────────────────────────────
 def validate_facts(client, sources: list, category: str) -> dict:
@@ -143,7 +143,7 @@ def run_pipeline(in_memory_sources: list, in_memory_articles: list):
         print("[Pipeline] ERROR: HUGGINGFACE_API_KEY not configured.")
         return
 
-    print("\n[Pipeline] Mode: Mistral-7B-Instruct-v0.3 (Chat API)")
+    print("\n[Pipeline] Mode: Zephyr-7B-Beta (Chat API)")
 
     trend_tags = []
     if os.getenv("VIRLO_API_KEY", "").strip():
