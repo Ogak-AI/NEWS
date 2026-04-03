@@ -1,5 +1,5 @@
 """
-main.py — News Gamma Tan FastAPI backend (In-Memory, Stateless)
+main.py — Veritas AI FastAPI backend (In-Memory, Stateless)
 """
 import datetime
 import os
@@ -12,7 +12,7 @@ ARTICLES: list[dict] = []
 SOURCES:  list[dict] = []
 
 app = FastAPI(
-    title="News Gamma Tan — Intelligence Wire API",
+    title="Veritas AI — Intelligence Wire API",
     version="2.0.0",
     description="AI-native journalism with radical editorial transparency.",
 )
@@ -33,7 +33,7 @@ PIPELINE_RUNNING = False
 def root():
     return {
         "status": "ok",
-        "service": "News Gamma Tan — Intelligence Wire",
+        "service": "Veritas AI — Intelligence Wire",
         "version": "2.0.0",
     }
 

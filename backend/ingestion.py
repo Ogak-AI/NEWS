@@ -1,5 +1,5 @@
 """
-ingestion.py — In-memory RSS feed ingestion for News Gamma Tan
+ingestion.py — In-memory RSS feed ingestion for Veritas AI
 6 editorial categories • 3 feeds each • 5 items per feed = up to 90 source records
 """
 import datetime

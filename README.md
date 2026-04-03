@@ -1,4 +1,4 @@
-# News Gamma Tan News Platform
+# Veritas AI News Platform
 
 This project is an AI-native newsroom: live RSS ingestion, automated fact validation, article generation, bias/readability evaluation, and transparent provenance.
 

@@ -1,4 +1,4 @@
-// App.tsx — News Gamma Tan Intelligence Wire
+// App.tsx — Veritas AI Intelligence Wire
 import { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
 import {
@@ -37,13 +37,13 @@ function SkeletonCard({ featured = false }: { featured?: boolean }) {
 function AboutPage() {
   return (
     <div className="about-section">
-      <h1>News Gamma Tan</h1>
+      <h1>Veritas AI</h1>
       <p className="about-subtitle">The Intelligence Wire — AI-native journalism with radical editorial transparency.</p>
 
       <div className="about-block">
         <h2>Editorial Philosophy</h2>
         <p>
-          News Gamma Tan produces serious, trustworthy reporting generated entirely by AI — applying the rigour,
+          Veritas AI produces serious, trustworthy reporting generated entirely by AI — applying the rigour,
           structure, and depth of world-class newsrooms. Every article is built on multi-source corroboration,
           automated fact-validation, and bias detection. No human editor sits in the chain; the editorial
           standards are baked into the pipeline itself.
@@ -94,7 +94,7 @@ function AboutPage() {
       <div className="about-block">
         <h2>Data Sources</h2>
         <p>
-          News Gamma Tan ingests exclusively from public RSS feeds operated by trusted institutions and outlets:
+          Veritas AI ingests exclusively from public RSS feeds operated by trusted institutions and outlets:
           NASA, BBC, The Guardian, Reuters, WHO, ScienceDaily, arXiv, MarketWatch, Yahoo Finance,
           The Verge, Ars Technica, MIT Technology Review, and MedlinePlus.
           No paywalled, unverified, or social-media sources are used.
@@ -228,7 +228,7 @@ export default function App() {
       <header className="masthead">
         <div className="masthead-inner">
           <div className="masthead-brand">
-            <span className="brand-name">NEWS GAMMA TAN</span>
+            <span className="brand-name">VERITAS</span>
             <span className="brand-sub">AI Intelligence Wire</span>
           </div>
 
@@ -322,7 +322,7 @@ export default function App() {
                 </>
               ) : articles.length === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-masthead">NEWS GAMMA TAN</div>
+                  <div className="empty-masthead">VERITAS AI</div>
                   <h3>The Intelligence Wire</h3>
                   <p className="empty-mission">
                     Serious, AI-generated reporting built on live RSS ingestion, automated
@@ -359,7 +359,7 @@ export default function App() {
       {/* ── Footer ── */}
       <footer className="footer">
         <div className="footer-inner">
-          <span className="footer-brand">NEWS GAMMA TAN</span>
+          <span className="footer-brand">VERITAS AI</span>
           <span className="footer-copy">
             Every article is AI-generated with full source transparency · {new Date().getFullYear()}
           </span>

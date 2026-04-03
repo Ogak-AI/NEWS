@@ -1,4 +1,4 @@
-// api.ts — Typed API client for News Gamma Tan Intelligence Wire
+// api.ts — Typed API client for Veritas AI Intelligence Wire
 
 export interface ArticleSummary {
   id: number;
