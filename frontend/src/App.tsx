@@ -192,15 +192,18 @@ export default function App() {
           const stat = await fetchPipelineStatus();
           if (stat) setStatus(stat);
 
-          if (stat.article_count > prevCount || attempts >= 12) {
+          // Stream articles in as they finish:
+          if (stat && stat.article_count > prevCount) {
+            await loadAll('all');
+            prevCount = stat.article_count;
+          }
+
+          // Stop ONLY when the backend says it's totally done running, OR it times out heavily
+          if ((stat && stat.status === 'ready' && attempts > 2) || attempts >= 40) {
             stopPoll();
             await loadAll('all');
             setPipelineRunning(false);
-            if (stat.article_count > prevCount) {
-              showToast(`✓ ${stat.article_count - prevCount} new article(s) published.`);
-            } else {
-              showToast('✓ Pipeline complete. Refresh the feed.');
-            }
+            showToast('✓ Pipeline complete. All topics generated.');
           }
         } catch { /* backend may be processing */ }
       }, 10000);

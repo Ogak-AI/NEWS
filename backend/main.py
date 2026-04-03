@@ -26,6 +26,8 @@ app.add_middleware(
 )
 
 
+PIPELINE_RUNNING = False
+
 # ── Health ─────────────────────────────────────────────────────────────────────
 @app.get("/")
 def root():
@@ -154,10 +156,11 @@ def get_digest():
 # ── Pipeline Status ────────────────────────────────────────────────────────────
 @app.get("/api/pipeline/status")
 def pipeline_status():
+    global PIPELINE_RUNNING
     return {
         "article_count": len(ARTICLES),
         "source_count":  len(SOURCES),
-        "status":        "ready",
+        "status":        "running" if PIPELINE_RUNNING else "ready",
         "timestamp":     datetime.datetime.utcnow().isoformat(),
     }
 
@@ -171,6 +174,15 @@ def trigger_ingest(background_tasks: BackgroundTasks):
 
 
 # ── Pipeline (articles only) ───────────────────────────────────────────────────
+def _run_articles_only():
+    global PIPELINE_RUNNING
+    PIPELINE_RUNNING = True
+    try:
+        import pipeline
+        pipeline.run_pipeline(SOURCES, ARTICLES)
+    finally:
+        PIPELINE_RUNNING = False
+
 @app.post("/api/pipeline/run")
 def trigger_pipeline(background_tasks: BackgroundTasks):
     if not os.getenv("HUGGINGFACE_API_KEY", "").strip():
@@ -178,8 +190,7 @@ def trigger_pipeline(background_tasks: BackgroundTasks):
             status_code=400,
             detail="HUGGINGFACE_API_KEY is required to run the AI editorial pipeline."
         )
-    import pipeline
-    background_tasks.add_task(pipeline.run_pipeline, SOURCES, ARTICLES)
+    background_tasks.add_task(_run_articles_only)
     return {
         "status": "started",
         "message": "Article generation running — refresh in ~60s"
@@ -188,12 +199,17 @@ def trigger_pipeline(background_tasks: BackgroundTasks):
 
 # ── Full Pipeline (ingest + generate) — single click ──────────────────────────
 def _run_full_pipeline():
-    import ingestion, pipeline
-    print("\n[Full Pipeline] Phase 1: RSS ingestion...")
-    ingestion.ingest_all(SOURCES)
-    print("[Full Pipeline] Phase 2: AI editorial pipeline...")
-    pipeline.run_pipeline(SOURCES, ARTICLES)
-    print("[Full Pipeline] Complete.")
+    global PIPELINE_RUNNING
+    PIPELINE_RUNNING = True
+    try:
+        import ingestion, pipeline
+        print("\n[Full Pipeline] Phase 1: RSS ingestion...")
+        ingestion.ingest_all(SOURCES)
+        print("[Full Pipeline] Phase 2: AI editorial pipeline...")
+        pipeline.run_pipeline(SOURCES, ARTICLES)
+        print("[Full Pipeline] Complete.")
+    finally:
+        PIPELINE_RUNNING = False
 
 
 @app.post("/api/pipeline/full")
