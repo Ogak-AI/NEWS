@@ -1,15 +1,18 @@
-// ArticleModal.tsx — Full article detail with provenance sidebar and depth meter
+// ArticleModal.tsx — Full article with dateline, pull quote, reading time, and Q&A panel
 import { useEffect } from 'react';
 import type { ArticleDetail } from '../api';
 import DepthMeter from './DepthMeter';
 import ProvenancePanel from './ProvenancePanel';
+import QAPanel from './QAPanel';
 
 const CAT_STYLES: Record<string, { color: string; bg: string }> = {
-  environment: { color: 'var(--cat-environment)', bg: 'rgba(62,207,142,0.1)' },
-  finance:     { color: 'var(--cat-finance)',     bg: 'rgba(245,166,35,0.1)' },
-  science:     { color: 'var(--cat-science)',     bg: 'rgba(167,139,250,0.1)' },
-  geopolitics: { color: 'var(--cat-geopolitics)', bg: 'rgba(248,113,113,0.1)' },
-  general:     { color: 'var(--cat-general)',     bg: 'rgba(91,142,255,0.1)' },
+  environment: { color: 'var(--cat-environment)', bg: 'rgba(62,207,142,0.08)' },
+  finance:     { color: 'var(--cat-finance)',     bg: 'rgba(245,166,35,0.08)' },
+  science:     { color: 'var(--cat-science)',     bg: 'rgba(167,139,250,0.08)' },
+  geopolitics: { color: 'var(--cat-geopolitics)', bg: 'rgba(248,113,113,0.08)' },
+  technology:  { color: 'var(--cat-technology)',  bg: 'rgba(56,189,248,0.08)' },
+  health:      { color: 'var(--cat-health)',      bg: 'rgba(52,211,153,0.08)' },
+  general:     { color: 'var(--cat-general)',     bg: 'rgba(91,142,255,0.08)' },
 };
 
 function formatTime(iso: string) {
@@ -23,8 +26,9 @@ function formatTime(iso: string) {
   }
 }
 
-/** Very simple markdown → HTML (handles ##, **, em, lists) */
+/** Markdown → HTML: headers, bold, italic, lists, paragraphs */
 function renderMarkdown(md: string): string {
+  if (!md) return '';
   return md
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
@@ -41,6 +45,12 @@ function renderMarkdown(md: string): string {
     .join('\n');
 }
 
+function readingTime(wordCount: number, content: string): string {
+  const words = wordCount > 0 ? wordCount : content.split(' ').length;
+  const mins = Math.max(1, Math.ceil(words / 200));
+  return `${mins} min read`;
+}
+
 interface Props {
   article: ArticleDetail;
   onClose: () => void;
@@ -49,8 +59,8 @@ interface Props {
 export default function ArticleModal({ article, onClose }: Props) {
   const cat = (article.category || 'general').toLowerCase();
   const catStyle = CAT_STYLES[cat] || CAT_STYLES.general;
+  const rt = readingTime(article.word_count ?? 0, article.content ?? '');
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);
@@ -70,7 +80,8 @@ export default function ArticleModal({ article, onClose }: Props) {
       aria-labelledby="modal-title"
     >
       <div className="modal-panel">
-        {/* Header */}
+
+        {/* ── Header ── */}
         <div className="modal-header">
           <div className="modal-header-top">
             <div className="modal-badges">
@@ -80,6 +91,7 @@ export default function ArticleModal({ article, onClose }: Props) {
               >
                 {article.category || 'General'}
               </span>
+              <span className="modal-reading-time">{rt}</span>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                 {formatTime(article.created_at)}
               </span>
@@ -91,29 +103,45 @@ export default function ArticleModal({ article, onClose }: Props) {
           </div>
 
           <h1 id="modal-title" className="modal-title">{article.title}</h1>
+
+          {/* Dateline */}
+          {article.dateline && (
+            <div className="modal-dateline">{article.dateline}</div>
+          )}
+
+          {/* Lede */}
           <blockquote className="modal-lede">{article.lede}</blockquote>
+
+          {/* Pull quote — hero treatment */}
+          {article.pull_quote && (
+            <div className="modal-pull-quote">
+              <span className="pull-quote-mark">"</span>
+              {article.pull_quote}
+            </div>
+          )}
         </div>
 
-        {/* Body: article content + provenance sidebar */}
+        {/* ── Body ── */}
         <div className="modal-body">
-          {/* Left: article content */}
+          {/* Article content */}
           <div
             className="article-content"
             dangerouslySetInnerHTML={{ __html: renderMarkdown(article.content || '') }}
           />
 
-          {/* Right: provenance + depth meter */}
+          {/* Provenance + depth + Q&A sidebar */}
           <div className="provenance-sidebar">
-            {/* Depth meter at top */}
             <div>
-              <div className="prov-section-title">Depth Meter</div>
+              <div className="prov-section-title">Corroboration Depth</div>
               <DepthMeter depth={article.depth_meter ?? 1} />
             </div>
 
-            {/* Provenance metrics, sources, facts */}
             <ProvenancePanel article={article} />
+
+            <QAPanel articleId={article.id} />
           </div>
         </div>
+
       </div>
     </div>
   );

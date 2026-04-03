@@ -1,16 +1,16 @@
 // App.tsx — Veritas AI Intelligence Wire
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
 import {
   fetchArticles, fetchArticle, fetchDigest, fetchPipelineStatus,
-  triggerIngest, triggerPipeline,
+  triggerFullPipeline,
   type ArticleSummary, type ArticleDetail, type DigestItem, type PipelineStatus,
 } from './api';
 import ArticleCard from './components/ArticleCard';
 import ArticleModal from './components/ArticleModal';
 import DigestStrip from './components/DigestStrip';
 
-const CATEGORIES = ['all', 'geopolitics', 'finance', 'environment', 'science'];
+const CATEGORIES = ['all', 'geopolitics', 'finance', 'environment', 'science', 'technology', 'health'];
 
 type View = 'feed' | 'about';
 
@@ -18,15 +18,16 @@ type View = 'feed' | 'about';
 function SkeletonCard({ featured = false }: { featured?: boolean }) {
   return (
     <div className="skeleton-card" style={{ gridColumn: featured ? 'span 8' : 'span 4' }}>
-      <div className="skeleton" style={{ height: 20, width: '40%' }} />
-      <div className="skeleton" style={{ height: 28, width: '90%', marginTop: 4 }} />
-      <div className="skeleton" style={{ height: 28, width: '75%' }} />
-      <div className="skeleton" style={{ height: 14, width: '100%', marginTop: 8 }} />
-      <div className="skeleton" style={{ height: 14, width: '80%' }} />
-      <div className="skeleton" style={{ height: 14, width: '60%' }} />
+      <div className="skeleton" style={{ height: 16, width: '35%' }} />
+      <div className="skeleton" style={{ height: 10, width: '55%', marginTop: 2 }} />
+      <div className="skeleton" style={{ height: 26, width: '90%', marginTop: 6 }} />
+      <div className="skeleton" style={{ height: 26, width: '70%' }} />
+      <div className="skeleton" style={{ height: 13, width: '100%', marginTop: 8 }} />
+      <div className="skeleton" style={{ height: 13, width: '85%' }} />
+      <div className="skeleton" style={{ height: 13, width: '65%' }} />
       <div style={{ marginTop: 'auto', paddingTop: 12, display: 'flex', justifyContent: 'space-between' }}>
-        <div className="skeleton" style={{ height: 12, width: '30%' }} />
-        <div className="skeleton" style={{ height: 12, width: '20%' }} />
+        <div className="skeleton" style={{ height: 11, width: '30%' }} />
+        <div className="skeleton" style={{ height: 11, width: '22%' }} />
       </div>
     </div>
   );
@@ -37,33 +38,32 @@ function AboutPage() {
   return (
     <div className="about-section">
       <h1>Veritas AI</h1>
-      <p className="about-subtitle">The Intelligence Wire — AI-native journalism with radical transparency.</p>
+      <p className="about-subtitle">The Intelligence Wire — AI-native journalism with radical editorial transparency.</p>
 
       <div className="about-block">
         <h2>Editorial Philosophy</h2>
         <p>
-          Veritas AI produces serious, trustworthy reporting generated entirely by AI, applying the rigour and
-          depth of world-class newsrooms. Every article exposes its source trail, confidence scores, and
-          validation steps — making the editorial process fully transparent to readers.
+          Veritas AI produces serious, trustworthy reporting generated entirely by AI — applying the rigour,
+          structure, and depth of world-class newsrooms. Every article is built on multi-source corroboration,
+          automated fact-validation, and bias detection. No human editor sits in the chain; the editorial
+          standards are baked into the pipeline itself.
         </p>
         <p>
-          We treat AI-generated news not as a novelty but as a credibility challenge to be solved through
-          transparency, multi-source corroboration, and automated bias detection.
+          We treat AI-generated journalism not as a novelty, but as a credibility challenge to be solved through
+          radical transparency: every article exposes its source trail, its validated facts, its confidence scores,
+          and its editorial flags — so readers can hold the reporting to account.
         </p>
       </div>
 
       <div className="about-block">
         <h2>The Editorial Pipeline</h2>
-        <p>
-          When configured with a Virlo developer key, Veritas AI also pulls live social intelligence signals from the Virlo API to help the editorial pipeline frame stories against trending audience behaviour.
-        </p>
         <div className="pipeline-steps">
           {[
-            ['Data Ingestion', 'Live RSS feeds from NASA, Reuters, BBC, The Guardian, WHO, ScienceDaily, arXiv, and more are parsed and normalised into structured source records.'],
-            ['Fact Validation', 'An LLM extracts key claims from all sources and cross-checks them for corroboration. Each fact receives a confidence score (0–100%) and a contradiction flag.'],
-            ['Article Generation', 'A GPT-4o correspondent produces a full-length article with: strong inverted-pyramid lede, balanced perspectives, contextual background, and section structure.'],
-            ['Bias & QC Evaluation', 'A second LLM pass evaluates the draft for slanted language, sensationalism, and omissions — producing a bias score and readability score.'],
-            ['Publishing', 'The article is published with its full provenance record: source trail, validated facts, confidence scores, depth meter, and bias gauge — all visible to readers.'],
+            ['RSS Ingestion', 'Live feeds from 18 trusted sources — BBC, Reuters, The Guardian, NASA, WHO, ScienceDaily, arXiv, MIT Technology Review, Ars Technica, and more — are parsed and normalised into structured source records.'],
+            ['Fact Validation', 'Llama-3.3-70B extracts up to 8 key claims from the source material. Each fact is scored by corroboration count (1.0 = 3+ independent sources) and flagged if sources contradict.'],
+            ['Article Generation', 'A senior-correspondent persona writes a 500–700-word article with dateline, inverted-pyramid lede, three structured sections (Background · Key Developments · What It Means), and a pull quote — all grounded in the validated facts.'],
+            ['Bias & QC Evaluation', 'A second LLM pass scores neutrality and readability against Reuters editorial standards, and produces a list of specific editorial flags (e.g. "loaded language in paragraph 2").'],
+            ['Publishing', 'The article is published with its full provenance record: source trail, validated facts, confidence scores, depth meter, neutrality gauge, and editorial flags — all visible to readers.'],
           ].map(([title, desc], i) => (
             <div key={i} className="pipeline-step">
               <span className="step-num">{i + 1}</span>
@@ -74,19 +74,30 @@ function AboutPage() {
       </div>
 
       <div className="about-block">
-        <h2>Transparency Metrics</h2>
-        <p><strong>Confidence Score</strong> — Average confidence across all validated facts for an article.</p>
-        <p><strong>Depth Meter (1–5)</strong> — Maximum number of independent sources corroborating any single claim. A depth of 3+ indicates strong multi-source corroboration.</p>
-        <p><strong>Bias Score</strong> — LLM-evaluated neutrality. 85%+ = neutral; 70–84% = mild lean; below 70% = flagged for review.</p>
-        <p><strong>Readability Score</strong> — Clarity and journalistic quality of prose.</p>
+        <h2>Transparency Metrics Explained</h2>
+        <p><strong>Confidence Score</strong> — Average confidence across all validated facts (1.0 = corroborated by 3+ independent sources; 0.6 = single-source claim).</p>
+        <p><strong>Depth Meter (1–5)</strong> — Maximum independent-source corroboration for any single claim. A depth of 3+ indicates strong multi-source verification.</p>
+        <p><strong>Neutrality Score</strong> — LLM assessment against Reuters standards. 85%+ = neutral; 70–84% = mild lean; below 70% = flagged for editorial review.</p>
+        <p><strong>Readability Score</strong> — Clarity and journalistic quality of the prose: active voice, sentence variety, absence of jargon.</p>
+        <p><strong>Editorial Flags</strong> — Specific issues identified by the bias evaluator, such as "loaded language" or "missing official response."</p>
+      </div>
+
+      <div className="about-block">
+        <h2>Ask the Reporter</h2>
+        <p>
+          Each article includes an AI Q&A panel where you can interrogate the reporting. The AI answers only
+          from the article's content — it will not speculate, hallucinate, or add external information.
+          If the article doesn't address your question, it says so.
+        </p>
       </div>
 
       <div className="about-block">
         <h2>Data Sources</h2>
         <p>
-          Veritas AI ingests from public RSS feeds operated by trusted institutions: NASA, the BBC, The Guardian,
-          Reuters, WHO, ScienceDaily, arXiv, MarketWatch, and Yahoo Finance. No paywalled or unverified sources
-          are used in the default pipeline.
+          Veritas AI ingests exclusively from public RSS feeds operated by trusted institutions and outlets:
+          NASA, BBC, The Guardian, Reuters, WHO, ScienceDaily, arXiv, MarketWatch, Yahoo Finance,
+          The Verge, Ars Technica, MIT Technology Review, and MedlinePlus.
+          No paywalled, unverified, or social-media sources are used.
         </p>
       </div>
     </div>
@@ -105,34 +116,39 @@ export default function App() {
   const [modalLoading, setModalLoading] = useState(false);
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 5000);
+    setTimeout(() => setToast(null), 6000);
   };
 
-  const loadArticles = useCallback(async (cat = activeCategory) => {
+  const loadAll = useCallback(async (cat = activeCategory) => {
     try {
-      const data = await fetchArticles(cat);
-      setArticles(data);
+      const [arts, dig, stat] = await Promise.all([
+        fetchArticles(cat),
+        fetchDigest().catch(() => [] as DigestItem[]),
+        fetchPipelineStatus().catch(() => null),
+      ]);
+      setArticles(arts);
+      setDigest(dig);
+      if (stat) setStatus(stat);
     } catch {
-      showToast('Could not load articles — is the backend running?');
+      showToast('Could not reach the backend — is Render awake?');
     }
   }, [activeCategory]);
 
   // Initial load
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      fetchArticles('all').then(setArticles).catch(() => {}),
-      fetchDigest().then(setDigest).catch(() => {}),
-      fetchPipelineStatus().then(setStatus).catch(() => {}),
-    ]).finally(() => setLoading(false));
+    loadAll('all').finally(() => setLoading(false));
   }, []);
 
   // Category filter
   useEffect(() => {
-    if (!loading) loadArticles(activeCategory);
+    if (!loading) {
+      fetchArticles(activeCategory).then(setArticles).catch(() => {});
+    }
   }, [activeCategory]); // eslint-disable-line
 
   // Open article modal
@@ -148,31 +164,56 @@ export default function App() {
     }
   };
 
-  // Run full pipeline (ingest + generate)
-  const handleGenerate = async () => {
-    setPipelineRunning(true);
-    showToast('⚡ Ingesting live RSS feeds...');
-    try {
-      await triggerIngest();
-      await new Promise(r => setTimeout(r, 2000));
-      showToast('✍ AI editorial pipeline running...');
-      await triggerPipeline();
-      showToast('✓ Pipeline started — new articles will appear in ~30 seconds.');
-      // Poll for updates
-      setTimeout(async () => {
-        await loadArticles('all');
-        const d = await fetchDigest().catch(() => digest);
-        setDigest(d);
-        const s = await fetchPipelineStatus().catch(() => status);
-        if (s) setStatus(s);
-        setPipelineRunning(false);
-        showToast('✓ Feed refreshed with new articles.');
-      }, 35000);
-    } catch {
-      showToast('Pipeline error — check backend logs.');
-      setPipelineRunning(false);
+  // Stop any running poll
+  const stopPoll = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
     }
   };
+
+  // Run full pipeline with smart polling
+  const handleGenerate = async () => {
+    if (pipelineRunning) return;
+    setPipelineRunning(true);
+    showToast('⚡ Editorial pipeline starting — ingesting 90 live sources…');
+    stopPoll();
+
+    try {
+      await triggerFullPipeline();
+      showToast('✍ AI journalist is writing — articles appear in ~90s');
+
+      let prevCount = articles.length;
+      let attempts = 0;
+
+      pollRef.current = setInterval(async () => {
+        attempts++;
+        try {
+          const stat = await fetchPipelineStatus();
+          if (stat) setStatus(stat);
+
+          if (stat.article_count > prevCount || attempts >= 12) {
+            stopPoll();
+            await loadAll('all');
+            setPipelineRunning(false);
+            if (stat.article_count > prevCount) {
+              showToast(`✓ ${stat.article_count - prevCount} new article(s) published.`);
+            } else {
+              showToast('✓ Pipeline complete. Refresh the feed.');
+            }
+          }
+        } catch { /* backend may be processing */ }
+      }, 10000);
+
+    } catch {
+      showToast('Pipeline error — check Render logs.');
+      setPipelineRunning(false);
+      stopPoll();
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => () => stopPoll(), []);
 
   const now = new Date().toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -197,16 +238,10 @@ export default function App() {
           </div>
 
           <nav className="masthead-nav">
-            <button
-              className={`nav-btn ${view === 'feed' ? 'active' : ''}`}
-              onClick={() => setView('feed')}
-            >
+            <button className={`nav-btn ${view === 'feed' ? 'active' : ''}`} onClick={() => setView('feed')}>
               Feed
             </button>
-            <button
-              className={`nav-btn ${view === 'about' ? 'active' : ''}`}
-              onClick={() => setView('about')}
-            >
+            <button className={`nav-btn ${view === 'about' ? 'active' : ''}`} onClick={() => setView('about')}>
               About
             </button>
             <button
@@ -215,7 +250,7 @@ export default function App() {
               disabled={pipelineRunning}
               id="generate-article-btn"
             >
-              {pipelineRunning ? '⏳ Generating...' : '⚡ Generate'}
+              {pipelineRunning ? '⏳ Running…' : '⚡ Run Pipeline'}
             </button>
           </nav>
         </div>
@@ -226,7 +261,7 @@ export default function App() {
         <div className="status-bar">
           <div className="status-bar-inner">
             <span className="status-item">
-              <strong>{status.article_count}</strong> published
+              <strong>{status.article_count}</strong> articles published
             </span>
             <span className="status-item">·</span>
             <span className="status-item">
@@ -236,6 +271,14 @@ export default function App() {
             <span className="status-item" style={{ color: 'var(--green)' }}>
               ● API online
             </span>
+            {pipelineRunning && (
+              <>
+                <span className="status-item">·</span>
+                <span className="status-item" style={{ color: 'var(--amber)' }}>
+                  ⏳ Pipeline running
+                </span>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -251,7 +294,7 @@ export default function App() {
           <AboutPage />
         ) : (
           <>
-            {/* Category filter */}
+            {/* Category tabs */}
             <div className="category-bar">
               {CATEGORIES.map(cat => (
                 <button
@@ -276,13 +319,24 @@ export default function App() {
                 </>
               ) : articles.length === 0 ? (
                 <div className="empty-state">
-                  <h3>No articles yet</h3>
-                  <p>
-                    Click Generate to trigger the live AI news pipeline and create your first transparent reports.
+                  <div className="empty-masthead">VERITAS AI</div>
+                  <h3>The Intelligence Wire</h3>
+                  <p className="empty-mission">
+                    Serious, AI-generated reporting built on live RSS ingestion, automated
+                    fact-checking, and editorial standards that rival the world's best newsrooms —
+                    with full source transparency on every article.
+                  </p>
+                  <p className="empty-hint">
+                    Click <strong>Run Pipeline</strong> to ingest live sources and generate
+                    your first articles. The full pipeline takes about 90 seconds.
                   </p>
                   <button className="empty-action-btn" onClick={handleGenerate} disabled={pipelineRunning}>
-                    {pipelineRunning ? '⏳ Generating...' : '⚡ Generate First Articles'}
+                    {pipelineRunning ? '⏳ Pipeline Running…' : '⚡ Run Editorial Pipeline'}
                   </button>
+                  <p className="empty-sources">
+                    Sources: BBC · Reuters · The Guardian · NASA · WHO · ScienceDaily ·
+                    arXiv · Ars Technica · MIT Tech Review · MarketWatch · and more
+                  </p>
                 </div>
               ) : (
                 articles.map((a, i) => (
@@ -307,19 +361,20 @@ export default function App() {
             Every article is AI-generated with full source transparency · {new Date().getFullYear()}
           </span>
           <span className="footer-copy">
-            {status ? `${status.source_count} sources · ${status.article_count} articles` : 'Loading...'}
+            {status ? `${status.source_count} sources · ${status.article_count} articles` : 'Connecting…'}
           </span>
         </div>
       </footer>
 
-      {/* ── Article modal ── */}
+      {/* ── Article modal (loading state) ── */}
       {modalLoading && (
         <div className="modal-overlay" style={{ alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-serif)', fontSize: 18 }}>
-            Loading article...
+            Loading article…
           </div>
         </div>
       )}
+
       {selectedArticle && !modalLoading && (
         <ArticleModal
           article={selectedArticle}
@@ -327,7 +382,7 @@ export default function App() {
         />
       )}
 
-      {/* ── Toast notification ── */}
+      {/* ── Toast ── */}
       {toast && (
         <div className="toast" role="status" aria-live="polite">
           {toast}

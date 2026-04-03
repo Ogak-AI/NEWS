@@ -1,12 +1,14 @@
-// ArticleCard.tsx
+// ArticleCard.tsx — Feed card with reading time, dateline, and pull quote on featured
 import type { ArticleSummary } from '../api';
 
 const CAT_STYLES: Record<string, { color: string; bg: string }> = {
-  environment: { color: 'var(--cat-environment)', bg: 'rgba(62,207,142,0.1)' },
-  finance:     { color: 'var(--cat-finance)',     bg: 'rgba(245,166,35,0.1)' },
-  science:     { color: 'var(--cat-science)',     bg: 'rgba(167,139,250,0.1)' },
-  geopolitics: { color: 'var(--cat-geopolitics)', bg: 'rgba(248,113,113,0.1)' },
-  general:     { color: 'var(--cat-general)',     bg: 'rgba(91,142,255,0.1)' },
+  environment: { color: 'var(--cat-environment)', bg: 'rgba(62,207,142,0.08)' },
+  finance:     { color: 'var(--cat-finance)',     bg: 'rgba(245,166,35,0.08)' },
+  science:     { color: 'var(--cat-science)',     bg: 'rgba(167,139,250,0.08)' },
+  geopolitics: { color: 'var(--cat-geopolitics)', bg: 'rgba(248,113,113,0.08)' },
+  technology:  { color: 'var(--cat-technology)',  bg: 'rgba(56,189,248,0.08)' },
+  health:      { color: 'var(--cat-health)',      bg: 'rgba(52,211,153,0.08)' },
+  general:     { color: 'var(--cat-general)',     bg: 'rgba(91,142,255,0.08)' },
 };
 
 function getConfColor(score: number) {
@@ -16,9 +18,9 @@ function getConfColor(score: number) {
 }
 
 function getBiasLabel(score: number) {
-  if (score >= 0.85) return { label: 'Neutral', color: 'var(--green)', bg: 'var(--green-dim)' };
-  if (score >= 0.70) return { label: 'Mild lean', color: 'var(--amber)', bg: 'var(--amber-dim)' };
-  return { label: 'Biased', color: 'var(--red)', bg: 'var(--red-dim)' };
+  if (score >= 0.85) return { label: 'Neutral',    color: 'var(--green)', bg: 'var(--green-dim)' };
+  if (score >= 0.70) return { label: 'Mild lean',  color: 'var(--amber)', bg: 'var(--amber-dim)' };
+  return               { label: 'Biased',      color: 'var(--red)',   bg: 'var(--red-dim)' };
 }
 
 function formatTime(iso: string) {
@@ -32,6 +34,12 @@ function formatTime(iso: string) {
   }
 }
 
+function readingTime(wordCount: number, lede: string): string {
+  const words = wordCount > 0 ? wordCount : lede.split(' ').length * 8;
+  const mins = Math.max(1, Math.ceil(words / 200));
+  return `${mins} min read`;
+}
+
 interface Props {
   article: ArticleSummary;
   featured?: boolean;
@@ -43,6 +51,7 @@ export default function ArticleCard({ article, featured = false, onClick }: Prop
   const catStyle = CAT_STYLES[cat] || CAT_STYLES.general;
   const confColor = getConfColor(article.aggregate_confidence);
   const bias = getBiasLabel(article.bias_score ?? 0.88);
+  const rt = readingTime(article.word_count ?? 0, article.lede ?? '');
 
   return (
     <article
@@ -54,21 +63,34 @@ export default function ArticleCard({ article, featured = false, onClick }: Prop
       onKeyDown={e => e.key === 'Enter' && onClick()}
       aria-label={`Read article: ${article.title}`}
     >
-      {/* Top meta */}
+      {/* Top meta row */}
       <div className="card-meta-top">
         <span className="cat-badge" style={{ color: catStyle.color, background: catStyle.bg, borderColor: catStyle.color }}>
           {article.category || 'General'}
         </span>
-        <span className="confidence-badge" style={{ color: confColor }}>
-          ✓ {Math.round((article.aggregate_confidence ?? 0) * 100)}% confidence
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="reading-time-badge">{rt}</span>
+          <span className="confidence-badge" style={{ color: confColor }}>
+            ✓ {Math.round((article.aggregate_confidence ?? 0) * 100)}%
+          </span>
+        </div>
       </div>
+
+      {/* Dateline */}
+      {article.dateline && (
+        <div className="card-dateline">{article.dateline}</div>
+      )}
 
       {/* Headline */}
       <h2 className="card-headline">{article.title}</h2>
 
       {/* Lede */}
       <p className="card-lede">{article.lede}</p>
+
+      {/* Pull quote — only on featured card */}
+      {featured && article.pull_quote && (
+        <p className="card-pull-quote">"{article.pull_quote}"</p>
+      )}
 
       {/* Footer */}
       <div className="card-footer">

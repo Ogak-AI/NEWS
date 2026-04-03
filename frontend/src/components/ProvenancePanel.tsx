@@ -1,4 +1,4 @@
-// ProvenancePanel.tsx — Source trail and fact assertions sidebar
+// ProvenancePanel.tsx — Source trail, fact assertions, and editorial flags
 import type { ArticleDetail } from '../api';
 
 interface Props {
@@ -18,10 +18,11 @@ function confBg(score: number) {
 }
 
 export default function ProvenancePanel({ article }: Props) {
-  const meta = article.provenance_metadata;
-  const sources = meta?.sources ?? [];
-  const facts = meta?.facts ?? [];
+  const meta      = article.provenance_metadata;
+  const sources   = meta?.sources ?? [];
+  const facts     = meta?.facts ?? [];
   const trendTags = meta?.virlo_trend_tags ?? [];
+  const flags     = meta?.editorial_flags ?? [];
 
   const biasColor =
     (article.bias_score ?? 0.85) >= 0.85 ? 'var(--green)' :
@@ -34,11 +35,10 @@ export default function ProvenancePanel({ article }: Props) {
     'var(--red)';
 
   return (
-    <div className="provenance-sidebar">
-
+    <>
       {/* Quality Metrics */}
       <div>
-        <div className="prov-section-title">Quality Metrics</div>
+        <div className="prov-section-title">Editorial Scores</div>
         <div className="metrics-grid">
           <div className="metric-card">
             <span className="metric-label">Confidence</span>
@@ -46,29 +46,23 @@ export default function ProvenancePanel({ article }: Props) {
               {Math.round((article.aggregate_confidence ?? 0) * 100)}%
             </span>
             <div className="metric-bar-wrap">
-              <div
-                className="metric-bar"
-                style={{
-                  width: `${(article.aggregate_confidence ?? 0) * 100}%`,
-                  background: confColor(article.aggregate_confidence ?? 0),
-                }}
-              />
+              <div className="metric-bar" style={{
+                width: `${(article.aggregate_confidence ?? 0) * 100}%`,
+                background: confColor(article.aggregate_confidence ?? 0),
+              }} />
             </div>
           </div>
 
           <div className="metric-card">
-            <span className="metric-label">Bias Score</span>
+            <span className="metric-label">Neutrality</span>
             <span className="metric-value" style={{ color: biasColor }}>
               {Math.round((article.bias_score ?? 0.88) * 100)}%
             </span>
             <div className="metric-bar-wrap">
-              <div
-                className="metric-bar"
-                style={{
-                  width: `${(article.bias_score ?? 0.88) * 100}%`,
-                  background: biasColor,
-                }}
-              />
+              <div className="metric-bar" style={{
+                width: `${(article.bias_score ?? 0.88) * 100}%`,
+                background: biasColor,
+              }} />
             </div>
           </div>
 
@@ -78,13 +72,10 @@ export default function ProvenancePanel({ article }: Props) {
               {Math.round((article.readability_score ?? 0.85) * 100)}%
             </span>
             <div className="metric-bar-wrap">
-              <div
-                className="metric-bar"
-                style={{
-                  width: `${(article.readability_score ?? 0.85) * 100}%`,
-                  background: readColor,
-                }}
-              />
+              <div className="metric-bar" style={{
+                width: `${(article.readability_score ?? 0.85) * 100}%`,
+                background: readColor,
+              }} />
             </div>
           </div>
 
@@ -94,17 +85,26 @@ export default function ProvenancePanel({ article }: Props) {
               {sources.length}
             </span>
             <div className="metric-bar-wrap">
-              <div
-                className="metric-bar"
-                style={{
-                  width: `${Math.min(sources.length / 5, 1) * 100}%`,
-                  background: 'var(--gold)',
-                }}
-              />
+              <div className="metric-bar" style={{
+                width: `${Math.min(sources.length / 5, 1) * 100}%`,
+                background: 'var(--gold)',
+              }} />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Editorial flags (if any) */}
+      {flags.length > 0 && (
+        <div>
+          <div className="prov-section-title">Editorial Flags</div>
+          <div className="editorial-flags-list">
+            {flags.map((flag, i) => (
+              <div key={i} className="editorial-flag">⚑ {flag}</div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Source Trail */}
       {sources.length > 0 && (
@@ -132,7 +132,7 @@ export default function ProvenancePanel({ article }: Props) {
         </div>
       )}
 
-      {/* Fact Trail */}
+      {/* Virlo trend signals */}
       {trendTags.length > 0 && (
         <div>
           <div className="prov-section-title">Virlo Trend Signals</div>
@@ -144,6 +144,7 @@ export default function ProvenancePanel({ article }: Props) {
         </div>
       )}
 
+      {/* Validated facts */}
       {facts.length > 0 && (
         <div>
           <div className="prov-section-title">Validated Facts ({facts.length})</div>
@@ -151,13 +152,10 @@ export default function ProvenancePanel({ article }: Props) {
             {facts.map((fact, i) => (
               <div key={i} className="fact-item">
                 <div className="fact-header">
-                  <span
-                    className="fact-conf"
-                    style={{
-                      color: confColor(fact.confidence),
-                      background: confBg(fact.confidence),
-                    }}
-                  >
+                  <span className="fact-conf" style={{
+                    color: confColor(fact.confidence),
+                    background: confBg(fact.confidence),
+                  }}>
                     {Math.round(fact.confidence * 100)}%
                   </span>
                   <span className="fact-corr">
@@ -173,6 +171,6 @@ export default function ProvenancePanel({ article }: Props) {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

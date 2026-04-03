@@ -1,10 +1,13 @@
-// api.ts — Typed API client for Veritas AI
+// api.ts — Typed API client for Veritas AI Intelligence Wire
 
 export interface ArticleSummary {
   id: number;
   title: string;
+  dateline: string;
   lede: string;
   digest: string;
+  pull_quote: string;
+  word_count: number;
   aggregate_confidence: number;
   depth_meter: number;
   bias_score: number;
@@ -29,6 +32,7 @@ export interface ArticleDetail extends ArticleSummary {
       title: string;
     }>;
     virlo_trend_tags?: string[];
+    editorial_flags?: string[];
   };
 }
 
@@ -50,7 +54,6 @@ export interface PipelineStatus {
 const BASE = (() => {
   const envBase = import.meta.env.VITE_API_BASE as string | undefined;
   if (!envBase) return '/api';
-
   const base = envBase.replace(/\/api\/?$/i, '').replace(/\/+$/g, '');
   return `${base}/api`;
 })();
@@ -62,7 +65,9 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const fetchArticles = (category?: string) =>
-  apiFetch<ArticleSummary[]>(`/articles${category && category !== 'all' ? `?category=${category}` : ''}`);
+  apiFetch<ArticleSummary[]>(
+    `/articles${category && category !== 'all' ? `?category=${category}` : ''}`
+  );
 
 export const fetchArticle = (id: number) =>
   apiFetch<ArticleDetail>(`/articles/${id}`);
@@ -78,3 +83,13 @@ export const triggerIngest = () =>
 
 export const triggerPipeline = () =>
   apiFetch<{ status: string; message: string }>('/pipeline/run', { method: 'POST' });
+
+export const triggerFullPipeline = () =>
+  apiFetch<{ status: string; message: string }>('/pipeline/full', { method: 'POST' });
+
+export const fetchArticleQA = (id: number, question: string) =>
+  apiFetch<{ answer: string }>(`/articles/${id}/qa`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question }),
+  });
