@@ -114,10 +114,10 @@ def trigger_ingest(background_tasks: BackgroundTasks):
 
 @app.post("/api/pipeline/run")
 def trigger_pipeline(background_tasks: BackgroundTasks):
-    if not os.getenv("OPENAI_API_KEY", "").strip():
+    if not os.getenv("HUGGINGFACE_API_KEY", "").strip():
         raise HTTPException(
             status_code=400,
-            detail="OPENAI_API_KEY is required to run the AI editorial pipeline. Set it in backend/.env."
+            detail="HUGGINGFACE_API_KEY is required to run the AI editorial pipeline. Set it in backend/.env."
         )
     import pipeline
     background_tasks.add_task(pipeline.run_pipeline)

@@ -7,7 +7,7 @@ This project is an AI-native newsroom: live RSS ingestion, automated fact valida
 1. Backend
    - `cd backend`
    - create or edit `.env`
-     - set `OPENAI_API_KEY=your_openai_key`
+     - set `HUGGINGFACE_API_KEY=your_huggingface_key` (get from https://huggingface.co/settings/tokens)
      - set `VIRLO_API_KEY=your_virlo_key` (optional for Virlo trend signal enrichment)
    - install Python dependencies:
      - `python -m pip install -r requirements.txt`
@@ -60,7 +60,7 @@ If the browser warns about a self-signed certificate, approve the exception for 
    - `POST http://localhost:8000/api/ingest`
    - `POST http://localhost:8000/api/pipeline/run`
 
-The pipeline now requires a valid `OPENAI_API_KEY`; `VIRLO_API_KEY` is optional and adds trend signal enrichment.
+The pipeline now requires a valid `HUGGINGFACE_API_KEY` for the free Mistral-7B model; `VIRLO_API_KEY` is optional and adds trend signal enrichment.
 
 ## Notes
 
