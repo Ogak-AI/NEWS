@@ -14,6 +14,32 @@ ARTICLES:         list[dict] = []
 SOURCES:          list[dict] = []
 PIPELINE_RUNNING: bool       = False
 
+CACHE_FILE = "/tmp/veritas_cache.json"
+import json
+
+def _load_cache():
+    global ARTICLES, SOURCES
+    try:
+        if os.path.exists(CACHE_FILE):
+            with open(CACHE_FILE, "r") as f:
+                data = json.load(f)
+                ARTICLES.clear()
+                ARTICLES.extend(data.get("articles", []))
+                SOURCES.clear()
+                SOURCES.extend(data.get("sources", []))
+                return True
+    except Exception as exc:
+        print(f"[Boot] Cache load failed: {exc}")
+    return False
+
+def _save_cache():
+    try:
+        with open(CACHE_FILE, "w") as f:
+            json.dump({"articles": ARTICLES, "sources": SOURCES}, f)
+        print("[Pipeline] State cached to disk.")
+    except Exception as exc:
+        print(f"[Pipeline] Cache save failed: {exc}")
+
 def _boot_pipeline():
     """Auto-run ingest + generate on cold start so articles are ready immediately."""
     global PIPELINE_RUNNING
@@ -21,11 +47,16 @@ def _boot_pipeline():
         return
     PIPELINE_RUNNING = True
     try:
+        if _load_cache() and len(ARTICLES) > 0:
+            print("[Boot] Loaded fresh articles from cache. Skipping auto-warm.")
+            return
+
         import ingestion, pipeline
         print("[Boot] Auto-warming: RSS ingestion...")
         ingestion.ingest_all(SOURCES)
         print("[Boot] Auto-warming: AI pipeline...")
         pipeline.run_pipeline(SOURCES, ARTICLES)
+        _save_cache()
         print("[Boot] Warm-up complete.")
     except Exception as exc:
         print(f"[Boot] Warm-up error: {repr(exc)}")
@@ -158,7 +189,7 @@ def article_qa(article_id: int, body: QARequest):
 
     try:
         response = client.chat.completions.create(
-            model=pl.MODEL,
+            model=pl.MODEL_UTILS,
             messages=messages,
             max_tokens=400,
             temperature=0.2,
@@ -222,6 +253,7 @@ def _run_articles_only():
     try:
         import pipeline
         pipeline.run_pipeline(SOURCES, ARTICLES)
+        _save_cache()
     finally:
         PIPELINE_RUNNING = False
 
@@ -249,6 +281,7 @@ def _run_full_pipeline():
         ingestion.ingest_all(SOURCES)
         print("[Full Pipeline] Phase 2: AI editorial pipeline...")
         pipeline.run_pipeline(SOURCES, ARTICLES)
+        _save_cache()
         print("[Full Pipeline] Complete.")
     finally:
         PIPELINE_RUNNING = False

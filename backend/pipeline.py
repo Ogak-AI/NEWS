@@ -5,12 +5,15 @@ import os
 import json
 import datetime
 from groq import Groq
+import time
+import groq
 from dotenv import load_dotenv
 from virlo import fetch_trending_hashtags, dispatch_orbit_search
 
 load_dotenv()
 
-MODEL = "llama-3.3-70b-versatile"
+MODEL_ARTICLE = "llama-3.3-70b-versatile"
+MODEL_UTILS = "llama-3.1-8b-instant"
 
 
 def _get_llm_client():
@@ -18,6 +21,24 @@ def _get_llm_client():
     if not key:
         return None
     return Groq(api_key=key)
+
+def _call_llm_with_retry(client, model, messages, max_tokens, temperature):
+    """Wrapper to handle RateLimitErrors with exponential backoff."""
+    for attempt in range(4):
+        try:
+            return client.chat.completions.create(
+                model=model, messages=messages, max_tokens=max_tokens, temperature=temperature
+            )
+        except groq.RateLimitError as e:
+            if attempt == 3:
+                raise
+            wait_time = 10 * (attempt + 1)
+            print(f"    [LLM] Rate limit hit on {model}. Retrying in {wait_time}s...")
+            time.sleep(wait_time)
+        except Exception as e:
+            if attempt == 3 or "503" not in str(e):
+                raise
+            time.sleep(10)
 
 
 def _extract_json(raw: str) -> dict:
@@ -86,8 +107,9 @@ def validate_facts(client, sources: list, category: str) -> dict:
     ]
 
     try:
-        response = client.chat.completions.create(
-            model=MODEL,
+        response = _call_llm_with_retry(
+            client=client,
+            model=MODEL_UTILS,
             messages=messages,
             max_tokens=2000,
             temperature=0.05,
@@ -170,8 +192,9 @@ def generate_article(
     ]
 
     try:
-        response = client.chat.completions.create(
-            model=MODEL,
+        response = _call_llm_with_retry(
+            client=client,
+            model=MODEL_ARTICLE,
             messages=messages,
             max_tokens=4000,
             temperature=0.35,
@@ -213,8 +236,8 @@ def evaluate_bias(client, article_content: str) -> tuple[float, float, list]:
                 )
             }
         ]
-        response = client.chat.completions.create(
-            model=MODEL, messages=messages, max_tokens=600, temperature=0.1
+        response = _call_llm_with_retry(
+            client=client, model=MODEL_UTILS, messages=messages, max_tokens=600, temperature=0.1
         )
         raw = response.choices[0].message.content.strip()
         data = _extract_json(raw)
@@ -307,7 +330,7 @@ def run_pipeline(in_memory_sources: list, in_memory_articles: list):
         print("[Pipeline] ERROR: GROQ_API_KEY not configured.")
         return
 
-    print("\n[Pipeline] Mode: Llama-3.3-70B-Versatile — World-Class Journalism")
+    print(f"\n[Pipeline] Models: {MODEL_ARTICLE} / {MODEL_UTILS}")
 
     trend_tags = []
     if os.getenv("VIRLO_API_KEY", "").strip():
