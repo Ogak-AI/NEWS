@@ -1330,6 +1330,8 @@ a:hover { text-decoration: underline; }
   line-height: 1.7;
   letter-spacing: 0.02em;
   margin-top: 4px;
+}
+
 /* ── Virlo UI ───────────────────────────────────────────────────────────── */
 .virlo-intelligence-card, .virlo-orbit-card {
   margin-bottom: 2rem;
@@ -1437,4 +1439,4 @@ a:hover { text-decoration: underline; }
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}}
+}
