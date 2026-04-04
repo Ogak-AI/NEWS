@@ -225,14 +225,89 @@ def evaluate_bias(client, article_content: str) -> tuple[float, float, list]:
 
 
 # ── Main Pipeline Runner ───────────────────────────────────────────────────────
+# ── Per-category worker ────────────────────────────────────────────────────────
+def _process_category(
+    client, category: str, cat_sources: list,
+    in_memory_articles: list, trend_tags: list,
+    id_lock,
+) -> None:
+    """Run the full editorial pipeline for one category (thread-safe)."""
+    print(f"\n  [{category.upper()}] Processing {len(cat_sources)} sources")
+    try:
+        fact_data    = validate_facts(client, cat_sources, category)
+        article_data = generate_article(client, fact_data, cat_sources, category, trend_tags)
+        bias_score, readability_score, editorial_flags = evaluate_bias(
+            client, article_data.get("content", "")
+        )
+
+        facts      = fact_data.get("facts", [])
+        depth      = min(max(f.get("sources_corroborating", 1) for f in facts) if facts else 1, 5)
+        confidence = (sum(f.get("confidence", 0.5) for f in facts) / len(facts)) if facts else 0.5
+
+        orbit_id = None
+        if os.getenv("VIRLO_API_KEY", "").strip():
+            try:
+                orbit_id = dispatch_orbit_search(
+                    name=f"News Audit: {category.title()}",
+                    keywords=[category, "news", "update"]
+                )
+            except Exception:
+                pass
+
+        new_article = {
+            "title":                article_data.get("title", "Untitled"),
+            "dateline":             article_data.get("dateline", ""),
+            "lede":                 article_data.get("lede", ""),
+            "content":              article_data.get("content", ""),
+            "digest":               article_data.get("digest", ""),
+            "pull_quote":           article_data.get("pull_quote", ""),
+            "word_count":           article_data.get("word_count", 0),
+            "aggregate_confidence": round(confidence, 2),
+            "depth_meter":          depth,
+            "bias_score":           round(bias_score, 2),
+            "readability_score":    round(readability_score, 2),
+            "category":             category,
+            "status":               "published",
+            "provenance_metadata":  {
+                "facts":            facts,
+                "sources": [
+                    {
+                        "publisher": s.get("publisher"),
+                        "url":       s.get("url"),
+                        "title":     s.get("title"),
+                    }
+                    for s in cat_sources
+                ],
+                "virlo_trend_tags":  trend_tags,
+                "virlo_orbit_id":    orbit_id,
+                "editorial_flags":   editorial_flags,
+            },
+            "created_at": datetime.datetime.utcnow().isoformat(),
+        }
+
+        with id_lock:
+            new_article["id"] = len(in_memory_articles) + 1
+            in_memory_articles.append(new_article)
+
+        wc = new_article["word_count"]
+        print(f"    ✓ Published ({wc} words): {new_article['title'][:70]}")
+
+    except Exception as exc:
+        print(f"[Pipeline] ERROR [{category.upper()}]: {repr(exc)}")
+
+
+# ── Main Pipeline Runner ───────────────────────────────────────────────────────
 def run_pipeline(in_memory_sources: list, in_memory_articles: list):
-    """Run the full editorial pipeline over in-memory sources."""
+    """Run the full editorial pipeline over in-memory sources (categories in parallel)."""
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
     client = _get_llm_client()
     if not client:
         print("[Pipeline] ERROR: GROQ_API_KEY not configured.")
         return
 
-    print("\n[Pipeline] Mode: Llama-3.3-70B-Instruct — World-Class Journalism")
+    print("\n[Pipeline] Mode: Llama-3.3-70B-Versatile — World-Class Journalism")
 
     trend_tags = []
     if os.getenv("VIRLO_API_KEY", "").strip():
@@ -251,72 +326,28 @@ def run_pipeline(in_memory_sources: list, in_memory_articles: list):
         cat = s.get("category", "general")
         by_category.setdefault(cat, []).append(s)
 
-    for category, cat_sources in by_category.items():
-        if any(a.get("category") == category for a in in_memory_articles):
-            continue
+    # Only process categories that don't already have an article
+    pending = [
+        (cat, srcs)
+        for cat, srcs in by_category.items()
+        if not any(a.get("category") == cat for a in in_memory_articles)
+    ]
 
-        print(f"\n  [{category.upper()}] Processing {len(cat_sources)} sources")
+    if not pending:
+        print("[Pipeline] All categories already have articles. Nothing to do.")
+        return
 
-        try:
-            fact_data = validate_facts(client, cat_sources, category)
-            article_data = generate_article(client, fact_data, cat_sources, category, trend_tags)
-            bias_score, readability_score, editorial_flags = evaluate_bias(
-                client, article_data.get("content", "")
+    id_lock = threading.Lock()
+
+    # max_workers=2 keeps us comfortably within Groq's free-tier rate limits
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [
+            executor.submit(
+                _process_category,
+                client, cat, srcs, in_memory_articles, trend_tags, id_lock
             )
+            for cat, srcs in pending
+        ]
+        for future in as_completed(futures):
+            future.result()  # surface any uncaught exceptions
 
-            facts = fact_data.get("facts", [])
-            depth = min(
-                max(f.get("sources_corroborating", 1) for f in facts) if facts else 1, 5
-            )
-            confidence = (
-                sum(f.get("confidence", 0.5) for f in facts) / len(facts)
-            ) if facts else 0.5
-
-            orbit_id = None
-            if os.getenv("VIRLO_API_KEY", "").strip():
-                try:
-                    orbit_id = dispatch_orbit_search(
-                        name=f"News Audit: {category.title()}",
-                        keywords=[category, "news", "update"]
-                    )
-                except Exception:
-                    pass
-
-            new_id = len(in_memory_articles) + 1
-            new_article = {
-                "id":                   new_id,
-                "title":                article_data.get("title", "Untitled"),
-                "dateline":             article_data.get("dateline", ""),
-                "lede":                 article_data.get("lede", ""),
-                "content":              article_data.get("content", ""),
-                "digest":               article_data.get("digest", ""),
-                "pull_quote":           article_data.get("pull_quote", ""),
-                "word_count":           article_data.get("word_count", 0),
-                "aggregate_confidence": round(confidence, 2),
-                "depth_meter":          depth,
-                "bias_score":           round(bias_score, 2),
-                "readability_score":    round(readability_score, 2),
-                "category":             category,
-                "status":               "published",
-                "provenance_metadata":  {
-                    "facts":            facts,
-                    "sources": [
-                        {
-                            "publisher": s.get("publisher"),
-                            "url":       s.get("url"),
-                            "title":     s.get("title"),
-                        }
-                        for s in cat_sources
-                    ],
-                    "virlo_trend_tags":   trend_tags,
-                    "virlo_orbit_id":     orbit_id,
-                    "editorial_flags":    editorial_flags,
-                },
-                "created_at": datetime.datetime.utcnow().isoformat(),
-            }
-            in_memory_articles.append(new_article)
-            wc = new_article["word_count"]
-            print(f"    ✓ Published ({wc} words): {new_article['title'][:70]}")
-
-        except Exception as exc:
-            print(f"[Pipeline] ERROR: {repr(exc)}")

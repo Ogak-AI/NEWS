@@ -40,28 +40,17 @@ FEEDS: dict[str, list[tuple[str, str]]] = {
 }
 
 
-def ingest_feed(
-    feed_url: str, publisher: str, category: str,
-    in_memory_sources: list, limit: int = 5
-) -> int:
-    """Parse one RSS feed and append new source records. Returns count added."""
+def _fetch_feed(publisher: str, url: str, category: str, limit: int) -> list[dict]:
+    """Fetch one RSS feed and return a list of source record dicts (no side effects)."""
     try:
-        parsed = feedparser.parse(feed_url)
+        parsed = feedparser.parse(url)
         if not parsed.entries:
             print(f"    [warn] No entries from {publisher}")
-            return 0
+            return []
 
-        count = 0
+        results = []
         for entry in parsed.entries[:limit]:
-            url = entry.get("link", "").strip() or None
-
-            # Deduplicate by URL
-            if url and any(s.get("url") == url for s in in_memory_sources):
-                continue
-
-            title = entry.get("title", "Untitled").strip()
-
-            # Try multiple content fields in order of richness
+            entry_url = entry.get("link", "").strip() or None
             content = (
                 entry.get("summary", "")
                 or entry.get("description", "")
@@ -75,37 +64,54 @@ def ingest_feed(
             if not content or len(content) < 30:
                 continue
 
-            published = str(
-                entry.get("published", datetime.datetime.utcnow().isoformat())
-            )
-
-            in_memory_sources.append({
-                "title":        title,
-                "url":          url,
-                "publisher":    publisher,
-                "published_date": published,
-                "content":      content,
-                "category":     category,
-                "ingested_at":  datetime.datetime.utcnow().isoformat(),
+            results.append({
+                "title":          entry.get("title", "Untitled").strip(),
+                "url":            entry_url,
+                "publisher":      publisher,
+                "published_date": str(entry.get("published", datetime.datetime.utcnow().isoformat())),
+                "content":        content,
+                "category":       category,
+                "ingested_at":    datetime.datetime.utcnow().isoformat(),
             })
-            count += 1
-
-        return count
+        return results
 
     except Exception as exc:
         print(f"    [error] {publisher}: {exc}")
-        return 0
+        return []
 
 
 def ingest_all(in_memory_sources: list, limit_per_feed: int = 5) -> int:
-    """Ingest from all configured RSS feeds. Returns total new sources added."""
+    """Fetch all configured RSS feeds concurrently. Returns total new sources added."""
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    lock  = threading.Lock()
     total = 0
-    for category, feeds in FEEDS.items():
-        print(f"\n  [{category.upper()}]")
-        for publisher, url in feeds:
-            n = ingest_feed(url, publisher, category, in_memory_sources, limit=limit_per_feed)
-            label = f"{n} new" if n else "no new (already ingested or unavailable)"
-            print(f"    {publisher}: {label}")
-            total += n
+
+    # Build flat task list: (publisher, url, category)
+    tasks = [
+        (publisher, url, category)
+        for category, feeds in FEEDS.items()
+        for publisher, url in feeds
+    ]
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        future_map = {
+            executor.submit(_fetch_feed, publisher, url, category, limit_per_feed): (publisher, category)
+            for publisher, url, category in tasks
+        }
+        for future in as_completed(future_map):
+            publisher, category = future_map[future]
+            items = future.result()
+            if not items:
+                continue
+            with lock:
+                existing_urls = {s.get("url") for s in in_memory_sources}
+                new_items = [i for i in items if i.get("url") not in existing_urls]
+                in_memory_sources.extend(new_items)
+                total += len(new_items)
+            label = f"{len(new_items)} new" if new_items else "no new (already ingested or unavailable)"
+            print(f"    [{category.upper()}] {publisher}: {label}")
+
     print(f"\n  Total new sources ingested: {total}")
     return total

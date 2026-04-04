@@ -3,6 +3,8 @@ main.py — Veritas AI FastAPI backend (In-Memory, Stateless)
 """
 import datetime
 import os
+import threading
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,10 +13,37 @@ from pydantic import BaseModel
 ARTICLES: list[dict] = []
 SOURCES:  list[dict] = []
 
+def _boot_pipeline():
+    """Auto-run ingest + generate on cold start so articles are ready immediately."""
+    global PIPELINE_RUNNING
+    if PIPELINE_RUNNING or not os.getenv("GROQ_API_KEY", "").strip():
+        return
+    PIPELINE_RUNNING = True
+    try:
+        import ingestion, pipeline
+        print("[Boot] Auto-warming: RSS ingestion...")
+        ingestion.ingest_all(SOURCES)
+        print("[Boot] Auto-warming: AI pipeline...")
+        pipeline.run_pipeline(SOURCES, ARTICLES)
+        print("[Boot] Warm-up complete.")
+    except Exception as exc:
+        print(f"[Boot] Warm-up error: {repr(exc)}")
+    finally:
+        PIPELINE_RUNNING = False
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Fire-and-forget: start pipeline in background thread on every cold start
+    threading.Thread(target=_boot_pipeline, daemon=True).start()
+    yield
+
+
 app = FastAPI(
     title="Veritas AI — Intelligence Wire API",
     version="2.0.0",
     description="AI-native journalism with radical editorial transparency.",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
