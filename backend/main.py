@@ -56,14 +56,18 @@ app.add_middleware(
 )
 
 
-# ── Health ─────────────────────────────────────────────────────────────────────
-@app.get("/")
+# ── Health — handles both GET (browser) and HEAD (UptimeRobot) ────────────────
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {
         "status": "ok",
         "service": "Veritas AI — Intelligence Wire",
         "version": "2.0.0",
     }
+
+@app.api_route("/health", methods=["GET", "HEAD"])
+def health():
+    return {"status": "ok"}
 
 
 # ── Articles ───────────────────────────────────────────────────────────────────
