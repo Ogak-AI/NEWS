@@ -1,68 +1,58 @@
-# Veritas AI News Platform
+# Veritas AI — The Intelligence Wire
 
-This project is an AI-native newsroom: live RSS ingestion, automated fact validation, article generation, bias/readability evaluation, and transparent provenance.
+> **The Core Vibe:** Real journalism, built entirely by AI. Radically transparent, free of human bias, and grounded in multi-source corroboration.
 
-## Setup
+Veritas AI is an autonomous, AI-native newsroom. It doesn't just aggregate feeds—it acts as a digital editor-in-chief and senior correspondent. By ingesting live data from trusted global sources, it cross-references facts, evaluates claims for corroboration, and writes professional-grade news articles completely on its own, with its entire "thought process" visible to the reader.
 
-1. Backend
-   - `cd backend`
-   - create or edit `.env`
-     - set `HUGGINGFACE_API_KEY=your_huggingface_key` (get from https://huggingface.co/settings/tokens)
-     - set `VIRLO_API_KEY=your_virlo_key` (optional for Virlo trend signal enrichment)
-   - install Python dependencies:
-     - `python -m pip install -r requirements.txt`
+## 🌟 Key Features
 
-2. Frontend
-   - `cd frontend`
-   - install Node dependencies:
-     - `npm install`
+- **Autonomous News Generation**: Wakes up, reads the news from 18 global sources (Reuters, BBC, NASA, etc.), fact-checks claims, and publishes full articles without human intervention.
+- **Radical Transparency (The Provenance Vault)**: Every article proudly displays exactly where its facts came from, including a **Depth Meter** for multi-source corroboration and a **Confidence Score**.
+- **Automated Bias & Quality Control**: A secondary LLM acts as an ethics analyst, scoring the generated article for neutrality and readability before it goes live.
+- **Interactive AI Q&A**: Readers can "Ask the Reporter" questions about any article, and the AI will answer strictly using the verified facts within the text—no hallucinations or external data allowed.
+- **Sponsored by Virlo.ai**: Employs real-time trend signals to keep the news surface contextually aware.
 
-## Run locally
+## 🛠️ The Tech Stack
 
-### Backend
+- **Frontend**: React, TypeScript, Vite, deployed on **Vercel**.
+- **Backend**: FastAPI (Python), entirely in-memory and stateless, deployed on **Render**.
+- **AI Models**: 
+  - `llama-3.1-8b-instant` for rapid data extraction and bias evaluation.
+  - `llama-3.3-70b-versatile` for elite, world-class journalism generation via **Groq**.
 
-From `backend/`:
+## 🚀 Live Deployment Instructions
 
-```powershell
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+Veritas AI is designed to be hosted globally with zero database required:
 
-The backend API will be available at `http://localhost:8000`.
+1. **Backend (Render):**
+   - Deploy the `backend/` folder to a Render Web Service.
+   - Set Environment Variables: 
+     - `GROQ_API_KEY`: Your free key from console.groq.com
+     - `VIRLO_API_KEY`: (Optional) Your Virlo Developer key
+   - Add a ping tool like UptimeRobot to your `/health` endpoint to prevent cold starts.
 
-### Frontend
+2. **Frontend (Vercel):**
+   - Deploy the `frontend/` folder to Vercel.
+   - Set Environment Variable:
+     - `VITE_API_BASE`: `https://your-render-app.onrender.com`
+   - Future deployments of the frontend will automatically connect to the live AI backend.
 
-From `frontend/`:
+## 💻 Local Development Setup
 
-```powershell
-npm run dev -- --host 0.0.0.0 --port 5173
-```
+To run the newsroom on your own machine:
 
-The frontend will be available at `http://localhost:5173`.
+1. **Start the Backend:**
+   ```bash
+   cd backend
+   python -m pip install -r requirements.txt
+   # Create a .env file with GROQ_API_KEY=your_key
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
+   ```
 
-## HTTPS demo
-
-If you want to demo the frontend over HTTPS locally, run Vite with the built-in secure server flag:
-
-```powershell
-npm run dev -- --host 0.0.0.0 --port 5173 --https
-```
-
-Then open:
-
-- `https://localhost:5173`
-
-If the browser warns about a self-signed certificate, approve the exception for your local demo.
-
-## Trigger the pipeline
-
-1. Open the frontend and use the `Generate` button.
-2. Or call the backend endpoints:
-   - `POST http://localhost:8000/api/ingest`
-   - `POST http://localhost:8000/api/pipeline/run`
-
-The pipeline now requires a valid `HUGGINGFACE_API_KEY` for the free Mistral-7B model; `VIRLO_API_KEY` is optional and adds trend signal enrichment.
-
-## Notes
-
-- This implementation does not rely on mock editorial data in the live pipeline.
-- `VIRLO_API_KEY` is optional and adds trending social context to the generated articles.
+2. **Start the Frontend:**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev -- --host 0.0.0.0 --port 5173
+   ```
+   *The newsroom will boot up at `http://localhost:5173`. If the screen is empty, wait 90 seconds while the AI ingests world news and writes its first batch of articles.*
