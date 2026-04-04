@@ -91,10 +91,10 @@ def article_qa(article_id: int, body: QARequest):
     if not question:
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
-    if not os.getenv("HUGGINGFACE_API_KEY", "").strip():
+    if not os.getenv("GROQ_API_KEY", "").strip():
         raise HTTPException(
             status_code=400,
-            detail="HUGGINGFACE_API_KEY required for Q&A"
+            detail="GROQ_API_KEY required for Q&A"
         )
 
     import pipeline as pl
@@ -195,10 +195,10 @@ def _run_articles_only():
 
 @app.post("/api/pipeline/run")
 def trigger_pipeline(background_tasks: BackgroundTasks):
-    if not os.getenv("HUGGINGFACE_API_KEY", "").strip():
+    if not os.getenv("GROQ_API_KEY", "").strip():
         raise HTTPException(
             status_code=400,
-            detail="HUGGINGFACE_API_KEY is required to run the AI editorial pipeline."
+            detail="GROQ_API_KEY is required to run the AI editorial pipeline."
         )
     background_tasks.add_task(_run_articles_only)
     return {
@@ -224,10 +224,10 @@ def _run_full_pipeline():
 
 @app.post("/api/pipeline/full")
 def trigger_full_pipeline(background_tasks: BackgroundTasks):
-    if not os.getenv("HUGGINGFACE_API_KEY", "").strip():
+    if not os.getenv("GROQ_API_KEY", "").strip():
         raise HTTPException(
             status_code=400,
-            detail="HUGGINGFACE_API_KEY is required to run the pipeline."
+            detail="GROQ_API_KEY is required to run the pipeline."
         )
     background_tasks.add_task(_run_full_pipeline)
     return {

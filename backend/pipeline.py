@@ -4,20 +4,20 @@ pipeline.py — Veritas AI editorial pipeline (Llama-3.3-70B, World-Class Journa
 import os
 import json
 import datetime
-from huggingface_hub import InferenceClient
+from groq import Groq
 from dotenv import load_dotenv
 from virlo import fetch_trending_hashtags, dispatch_orbit_search
 
 load_dotenv()
 
-MODEL = "meta-llama/Llama-3.3-70B-Instruct"
+MODEL = "llama-3.3-70b-versatile"
 
 
 def _get_llm_client():
-    key = os.getenv("HUGGINGFACE_API_KEY", "").strip()
+    key = os.getenv("GROQ_API_KEY", "").strip()
     if not key:
         return None
-    return InferenceClient(token=key)
+    return Groq(api_key=key)
 
 
 def _extract_json(raw: str) -> dict:
@@ -43,7 +43,7 @@ def _today_str() -> str:
 # ── Step 1: Fact Validation ────────────────────────────────────────────────────
 def validate_facts(client, sources: list, category: str) -> dict:
     if not client:
-        raise RuntimeError("HUGGINGFACE_API_KEY is required for fact validation.")
+        raise RuntimeError("GROQ_API_KEY is required for fact validation.")
 
     source_texts = [
         f"[Source {i+1}] {s.get('publisher')}\n"
@@ -109,7 +109,7 @@ def generate_article(
     trend_tags: list = None
 ) -> dict:
     if not client:
-        raise RuntimeError("HUGGINGFACE_API_KEY is required for article generation.")
+        raise RuntimeError("GROQ_API_KEY is required for article generation.")
 
     facts = facts_data.get("facts", [])
     top_facts = sorted(facts, key=lambda f: f.get("confidence", 0), reverse=True)[:8]
@@ -229,7 +229,7 @@ def run_pipeline(in_memory_sources: list, in_memory_articles: list):
     """Run the full editorial pipeline over in-memory sources."""
     client = _get_llm_client()
     if not client:
-        print("[Pipeline] ERROR: HUGGINGFACE_API_KEY not configured.")
+        print("[Pipeline] ERROR: GROQ_API_KEY not configured.")
         return
 
     print("\n[Pipeline] Mode: Llama-3.3-70B-Instruct — World-Class Journalism")

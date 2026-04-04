@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-huggingface_hub
+groq
 feedparser
 python-dotenv
 httpx
