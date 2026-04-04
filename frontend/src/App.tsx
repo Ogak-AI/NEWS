@@ -100,6 +100,14 @@ function AboutPage() {
           No paywalled, unverified, or social-media sources are used.
         </p>
       </div>
+
+      <div className="about-block">
+        <h2>Sponsors</h2>
+        <p>
+          Veritas AI is proudly powered and sponsored by <strong><a href="https://virlo.ai" target="_blank" rel="noopener noreferrer" style={{color: 'var(--amber)', textDecoration: 'none'}}>Virlo.ai</a></strong>.
+          Virlo.ai enables our real-time trend enrichment and orbital intelligence signals, making the news surface as autonomous and context-aware as possible.
+        </p>
+      </div>
     </div>
   );
 }
@@ -245,6 +253,9 @@ export default function App() {
               <span className="live-dot" />
               Live · AI-Generated · Fully Transparent
             </div>
+            <div className="masthead-badge" style={{ marginLeft: 10, background: 'rgba(245, 158, 11, 0.1)', color: 'var(--amber)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+              Sponsored by <a href="https://virlo.ai" target="_blank" rel="noopener noreferrer" style={{color: 'inherit', textDecoration: 'none', fontWeight: 600}}>Virlo.ai</a>
+            </div>
           </div>
 
           <nav className="masthead-nav">
@@ -359,6 +370,9 @@ export default function App() {
           <span className="footer-brand">VERITAS AI</span>
           <span className="footer-copy">
             Every article is AI-generated with full source transparency · {new Date().getFullYear()}
+          </span>
+          <span className="footer-copy">
+            Sponsored proudly by <a href="https://virlo.ai" target="_blank" rel="noopener noreferrer" style={{color: 'inherit'}}>Virlo.ai</a>
           </span>
           <span className="footer-copy">
             {status ? `${status.source_count} sources · ${status.article_count} articles` : 'Connecting…'}
