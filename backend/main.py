@@ -137,6 +137,16 @@ def article_qa(article_id: int, body: QARequest):
         raise HTTPException(status_code=500, detail=f"AI error: {str(e)[:120]}")
 
 
+# ── Virlo Orbit Proxy ────────────────────────────────────────────────────────────
+@app.get("/api/orbit/{orbit_id}")
+def proxy_orbit_status(orbit_id: str):
+    import virlo
+    data = virlo.get_orbit_status(orbit_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Orbit request not found or not ready.")
+    return data
+
+
 # ── Digest ─────────────────────────────────────────────────────────────────────
 @app.get("/api/digest")
 def get_digest():

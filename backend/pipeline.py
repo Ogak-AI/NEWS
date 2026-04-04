@@ -6,7 +6,7 @@ import json
 import datetime
 from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
-from virlo import fetch_trending_hashtags
+from virlo import fetch_trending_hashtags, dispatch_orbit_search
 
 load_dotenv()
 
@@ -106,7 +106,7 @@ def validate_facts(client, sources: list, category: str) -> dict:
 # ── Step 2: Article Generation ────────────────────────────────────────────────
 def generate_article(
     client, facts_data: dict, sources: list, category: str,
-    trend_tags: list[str] | None = None
+    trend_tags: list = None
 ) -> dict:
     if not client:
         raise RuntimeError("HUGGINGFACE_API_KEY is required for article generation.")
@@ -122,7 +122,8 @@ def generate_article(
 
     trend_context = ""
     if trend_tags:
-        trend_context = f"\n\nTrending context: {', '.join(trend_tags)}."
+        names = [t.get("hashtag", "") for t in trend_tags if isinstance(t, dict)]
+        trend_context = f"\n\nTrending context: {', '.join(names)}."
 
     today = _today_str()
 
@@ -271,6 +272,16 @@ def run_pipeline(in_memory_sources: list, in_memory_articles: list):
                 sum(f.get("confidence", 0.5) for f in facts) / len(facts)
             ) if facts else 0.5
 
+            orbit_id = None
+            if os.getenv("VIRLO_API_KEY", "").strip():
+                try:
+                    orbit_id = dispatch_orbit_search(
+                        name=f"News Audit: {category.title()}",
+                        keywords=[category, "news", "update"]
+                    )
+                except Exception:
+                    pass
+
             new_id = len(in_memory_articles) + 1
             new_article = {
                 "id":                   new_id,
@@ -298,6 +309,7 @@ def run_pipeline(in_memory_sources: list, in_memory_articles: list):
                         for s in cat_sources
                     ],
                     "virlo_trend_tags":   trend_tags,
+                    "virlo_orbit_id":     orbit_id,
                     "editorial_flags":    editorial_flags,
                 },
                 "created_at": datetime.datetime.utcnow().isoformat(),

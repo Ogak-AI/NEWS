@@ -31,7 +31,8 @@ export interface ArticleDetail extends ArticleSummary {
       url: string | null;
       title: string;
     }>;
-    virlo_trend_tags?: string[];
+    virlo_trend_tags?: { hashtag: string; count: number; total_views: number }[];
+    virlo_orbit_id?: string;
     editorial_flags?: string[];
   };
 }
@@ -93,3 +94,22 @@ export const fetchArticleQA = (id: number, question: string) =>
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question }),
   });
+
+export interface OrbitResponse {
+  data?: {
+    status?: string;
+    videos?: { title: string; views: number; creator: string }[];
+    intelligence_report?: string;
+  };
+}
+
+export async function fetchOrbitStatus(orbitId: string): Promise<OrbitResponse | null> {
+  try {
+    const res = await fetch(`${BASE}/orbit/${orbitId}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    return null;
+  }
+}
+

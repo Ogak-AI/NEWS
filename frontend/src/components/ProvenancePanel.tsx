@@ -1,5 +1,6 @@
-// ProvenancePanel.tsx — Source trail, fact assertions, and editorial flags
-import type { ArticleDetail } from '../api';
+import { useState, useEffect } from 'react';
+import type { ArticleDetail, OrbitResponse } from '../api';
+import { fetchOrbitStatus } from '../api';
 
 interface Props {
   article: ArticleDetail;
@@ -23,6 +24,25 @@ export default function ProvenancePanel({ article }: Props) {
   const facts     = meta?.facts ?? [];
   const trendTags = meta?.virlo_trend_tags ?? [];
   const flags     = meta?.editorial_flags ?? [];
+  const orbitId   = meta?.virlo_orbit_id ?? null;
+
+  const [orbit, setOrbit] = useState<OrbitResponse | null>(null);
+
+  useEffect(() => {
+    if (!orbitId) return;
+    let mounted = true;
+    const poll = async () => {
+      const res = await fetchOrbitStatus(orbitId);
+      if (!mounted) return;
+      if (res?.data) {
+        setOrbit(res);
+        if (res.data.status === 'completed' || res.data.status === 'failed') return;
+      }
+      setTimeout(poll, 15000);
+    };
+    poll();
+    return () => { mounted = false; };
+  }, [orbitId]);
 
   const biasColor =
     (article.bias_score ?? 0.85) >= 0.85 ? 'var(--green)' :
@@ -132,15 +152,57 @@ export default function ProvenancePanel({ article }: Props) {
         </div>
       )}
 
-      {/* Virlo trend signals */}
+      {/* Virlo trend signals details */}
       {trendTags.length > 0 && (
-        <div>
-          <div className="prov-section-title">Virlo Trend Signals</div>
-          <div className="trend-chip-list">
-            {trendTags.map((tag, i) => (
-              <span key={i} className="trend-chip">{tag}</span>
-            ))}
+        <div className="virlo-intelligence-card">
+          <div className="prov-section-title v-brand">Viral Signals & Hashtags</div>
+          <table className="virlo-table">
+            <thead>
+              <tr>
+                <th>Hashtag</th>
+                <th>Videos</th>
+                <th>Total Views</th>
+              </tr>
+            </thead>
+            <tbody>
+              {trendTags.map((tag: any, i: number) => (
+                <tr key={i}>
+                  <td>{tag.hashtag || String(tag)}</td>
+                  <td>{tag.count ? tag.count.toLocaleString() : '—'}</td>
+                  <td>{tag.total_views ? (tag.total_views / 1e6).toFixed(1) + 'M' : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Virlo Orbit Analysis */}
+      {orbitId && (
+        <div className="virlo-orbit-card">
+          <div className="prov-section-title v-brand">Orbit AI Social Listening</div>
+          <div className="orbit-status-badge">
+            Status: {orbit?.data?.status ? orbit.data.status.toUpperCase() : 'DISPATCHED'}
           </div>
+          {orbit?.data?.status === 'processing' && (
+            <p className="orbit-desc">Virlo is running asynchronous mass media discovery (TikTok/YouTube)...</p>
+          )}
+          {orbit?.data?.intelligence_report && (
+            <div className="orbit-report">
+              <p>{orbit.data.intelligence_report}</p>
+            </div>
+          )}
+          {orbit?.data?.videos && orbit.data.videos.length > 0 && (
+            <div className="orbit-videos">
+              <h4>Flagged Creator Content</h4>
+              {orbit.data.videos.slice(0, 3).map((vid: any, i) => (
+                <div key={i} className="orbit-vid">
+                  <span>{vid.title}</span>
+                  <span className="vid-meta">by {vid.creator} • {(vid.views / 1e6).toFixed(1)}M views</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

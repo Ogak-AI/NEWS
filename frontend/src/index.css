@@ -1330,4 +1330,107 @@ a:hover { text-decoration: underline; }
   line-height: 1.7;
   letter-spacing: 0.02em;
   margin-top: 4px;
+/* ── Virlo UI ───────────────────────────────────────────────────────────── */
+.virlo-intelligence-card, .virlo-orbit-card {
+  margin-bottom: 2rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.prov-section-title.v-brand {
+  color: #ff3b3b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.prov-section-title.v-brand::before {
+  content: 'V';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: #ff3b3b;
+  color: #fff;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.virlo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.virlo-table th {
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.5rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.virlo-table td {
+  padding: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.virlo-table tr:last-child td {
+  border-bottom: none;
+}
+
+.orbit-status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 59, 59, 0.1);
+  color: #ff3b3b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.orbit-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.orbit-report p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-light);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-left: 2px solid #ff3b3b;
+  margin: 1rem 0;
+}
+
+.orbit-videos h4 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.orbit-vid {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  background: rgba(255,255,255,0.02);
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.orbit-vid .vid-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
 }
