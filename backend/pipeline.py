@@ -12,7 +12,7 @@ from virlo import fetch_trending_hashtags, dispatch_orbit_search
 
 load_dotenv()
 
-MODEL_ARTICLE = "llama-3.3-70b-versatile"
+MODEL_ARTICLE = "llama-3.1-8b-instant"
 MODEL_UTILS = "llama-3.1-8b-instant"
 
 
