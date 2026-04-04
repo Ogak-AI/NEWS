@@ -10,8 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # ── In-memory stores ───────────────────────────────────────────────────────────
-ARTICLES: list[dict] = []
-SOURCES:  list[dict] = []
+ARTICLES:         list[dict] = []
+SOURCES:          list[dict] = []
+PIPELINE_RUNNING: bool       = False
 
 def _boot_pipeline():
     """Auto-run ingest + generate on cold start so articles are ready immediately."""
@@ -54,8 +55,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-PIPELINE_RUNNING = False
 
 # ── Health ─────────────────────────────────────────────────────────────────────
 @app.get("/")
