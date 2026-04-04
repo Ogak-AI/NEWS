@@ -144,6 +144,13 @@ export default function App() {
     loadAll('all').finally(() => setLoading(false));
   }, []);
 
+  // Autonomous trigger if empty
+  useEffect(() => {
+    if (!loading && articles.length === 0 && !pipelineRunning) {
+      handleGenerate();
+    }
+  }, [loading, articles.length, pipelineRunning]); // eslint-disable-line
+
   // Category filter
   useEffect(() => {
     if (!loading) {
@@ -247,14 +254,6 @@ export default function App() {
             <button className={`nav-btn ${view === 'about' ? 'active' : ''}`} onClick={() => setView('about')}>
               About
             </button>
-            <button
-              className="generate-btn"
-              onClick={handleGenerate}
-              disabled={pipelineRunning}
-              id="generate-article-btn"
-            >
-              {pipelineRunning ? '⏳ Running…' : '⚡ Run Pipeline'}
-            </button>
           </nav>
         </div>
       </header>
@@ -323,23 +322,21 @@ export default function App() {
               ) : articles.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-masthead">VERITAS AI</div>
-                  <h3>The Intelligence Wire</h3>
+                  <h3>Autonomous Newsroom Booting...</h3>
+                  <p className="empty-mission" style={{ color: 'var(--amber)', fontSize: '1.1rem', marginTop: '1rem' }}>
+                    <strong>Live Generation in Progress</strong>
+                  </p>
                   <p className="empty-mission">
-                    Serious, AI-generated reporting built on live RSS ingestion, automated
-                    fact-checking, and editorial standards that rival the world's best newsrooms —
-                    with full source transparency on every article.
+                    Our AI is currently ingesting live feeds from global sources (Reuters, BBC, NASA) 
+                    and actively fact-checking claims to write new articles. 
                   </p>
                   <p className="empty-hint">
-                    Click <strong>Run Pipeline</strong> to ingest live sources and generate
-                    your first articles. The full pipeline takes about 90 seconds.
+                    Articles will automatically stream into this dashboard over the next 90 seconds. 
+                    Please leave this page open.
                   </p>
-                  <button className="empty-action-btn" onClick={handleGenerate} disabled={pipelineRunning}>
-                    {pipelineRunning ? '⏳ Pipeline Running…' : '⚡ Run Editorial Pipeline'}
-                  </button>
-                  <p className="empty-sources">
-                    Sources: BBC · Reuters · The Guardian · NASA · WHO · ScienceDaily ·
-                    arXiv · Ars Technica · MIT Tech Review · MarketWatch · and more
-                  </p>
+                  <div style={{ marginTop: '2rem' }}>
+                    <div className="pulse-loader" style={{ width: 40, height: 40, border: '3px solid var(--amber)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }}></div>
+                  </div>
                 </div>
               ) : (
                 articles.map((a, i) => (
