@@ -227,7 +227,7 @@ export default function App() {
       {/* ── Masthead ── */}
       <header className="masthead">
         <div className="masthead-inner">
-          <div className="masthead-brand">
+          <div className="masthead-brand" onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>
             <span className="brand-name">VERITAS</span>
             <span className="brand-sub">AI Intelligence Wire</span>
           </div>
