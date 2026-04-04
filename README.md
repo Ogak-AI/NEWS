@@ -55,4 +55,4 @@ To run the newsroom on your own machine:
    npm install
    npm run dev -- --host 0.0.0.0 --port 5173
    ```
-   *The newsroom will boot up at `http://localhost:5173`. If the screen is empty, wait 90 seconds while the AI ingests world news and writes its first batch of articles.*
+   *The newsroom will boot up at `http://localhost:5173`. If the screen is empty, wait shortly while the AI ingests world news and writes its first batch of articles.*

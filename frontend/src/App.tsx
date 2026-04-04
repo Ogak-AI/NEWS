@@ -196,7 +196,7 @@ export default function App() {
 
     try {
       await triggerFullPipeline();
-      showToast('✍ AI journalist is writing — articles appear in ~90s');
+      showToast('✍ AI journalist is writing — articles will begin appearing shortly');
 
       let prevCount = articles.length;
       let attempts = 0;
@@ -342,7 +342,7 @@ export default function App() {
                     and actively fact-checking claims to write new articles. 
                   </p>
                   <p className="empty-hint">
-                    Articles will automatically stream into this dashboard over the next 90 seconds. 
+                    Articles will automatically stream into this dashboard shortly. 
                     Please leave this page open.
                   </p>
                   <div style={{ marginTop: '2rem' }}>
