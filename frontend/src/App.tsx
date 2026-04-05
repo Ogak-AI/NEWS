@@ -9,6 +9,182 @@ import {
 import ArticleCard from './components/ArticleCard';
 import ArticleModal from './components/ArticleModal';
 import DigestStrip from './components/DigestStrip';
+import VirloFeedIntelligence from './components/VirloFeedIntelligence';
+import FeedQAWidget from './components/FeedQAWidget';
+
+// ── API Key Block Screen ───────────────────────────────────────────────────
+function ApiKeyBlockScreen() {
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 9999,
+      background: 'var(--bg-deep)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '32px',
+      textAlign: 'center',
+    }}>
+      {/* Ambient glow */}
+      <div style={{
+        position: 'absolute',
+        width: 600,
+        height: 600,
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(232,64,64,0.08) 0%, transparent 70%)',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* 400 badge */}
+      <div style={{
+        fontFamily: 'var(--font-serif)',
+        fontSize: 96,
+        fontWeight: 900,
+        color: 'var(--red)',
+        opacity: 0.15,
+        lineHeight: 1,
+        letterSpacing: '-0.04em',
+        userSelect: 'none',
+        marginBottom: 8,
+      }}>400</div>
+
+      {/* Lock icon */}
+      <div style={{ fontSize: 48, marginBottom: 16 }}>&#128274;</div>
+
+      {/* Brand */}
+      <div style={{
+        fontFamily: 'var(--font-serif)',
+        fontSize: 18,
+        fontWeight: 700,
+        letterSpacing: '0.18em',
+        color: 'var(--gold)',
+        textTransform: 'uppercase',
+        marginBottom: 24,
+      }}>Veritas AI — Intelligence Wire</div>
+
+      {/* Headline */}
+      <h1 style={{
+        fontFamily: 'var(--font-serif)',
+        fontSize: 28,
+        fontWeight: 700,
+        color: 'var(--text-primary)',
+        maxWidth: 520,
+        lineHeight: 1.3,
+        marginBottom: 16,
+      }}>
+        API Key Required
+      </h1>
+
+      {/* Description */}
+      <p style={{
+        fontSize: 15,
+        color: 'var(--text-secondary)',
+        maxWidth: 480,
+        lineHeight: 1.7,
+        marginBottom: 32,
+      }}>
+        This platform requires a <strong style={{ color: 'var(--text-primary)' }}>Groq API key</strong> to
+        power its AI-native editorial pipeline.&nbsp;
+        Add your key to the backend <code style={{
+          background: 'var(--bg-elevated)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 4,
+          padding: '1px 6px',
+          fontSize: 13,
+          color: 'var(--amber)',
+        }}>.env</code> file and restart the server.
+      </p>
+
+      {/* Instructions card */}
+      <div style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '24px 28px',
+        maxWidth: 480,
+        width: '100%',
+        marginBottom: 28,
+        textAlign: 'left',
+      }}>
+        <div style={{
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          color: 'var(--text-muted)',
+          marginBottom: 14,
+        }}>Setup instructions</div>
+
+        {[
+          ['1', 'Get a free key', 'Visit console.groq.com/keys and sign up'],
+          ['2', 'Open .env', 'backend/.env in this project'],
+          ['3', 'Add the key', 'GROQ_API_KEY=your_key_here'],
+          ['4', 'Restart server', 'uvicorn main:app --reload'],
+        ].map(([num, title, desc]) => (
+          <div key={num} style={{
+            display: 'flex',
+            gap: 14,
+            alignItems: 'flex-start',
+            marginBottom: 14,
+          }}>
+            <div style={{
+              width: 22,
+              height: 22,
+              borderRadius: '50%',
+              background: 'var(--red-dim)',
+              border: '1px solid var(--red)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'var(--red)',
+              flexShrink: 0,
+              marginTop: 1,
+            }}>{num}</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* CTA */}
+      <a
+        href="https://console.groq.com/keys"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          background: 'var(--gold)',
+          color: '#07080D',
+          fontFamily: 'var(--font-sans)',
+          fontSize: 13,
+          fontWeight: 700,
+          padding: '10px 24px',
+          borderRadius: 'var(--radius-md)',
+          textDecoration: 'none',
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+        }}
+      >
+        Get Free Groq API Key →
+      </a>
+
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 20 }}>
+        Free tier · 300 req/min · No credit card required
+      </p>
+    </div>
+  );
+}
 
 const CATEGORIES = ['all', 'geopolitics', 'finance', 'environment', 'science', 'technology', 'health'];
 
@@ -125,6 +301,7 @@ export default function App() {
   const [pipelineRunning, setPipelineRunning] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [apiKeyMissing, setApiKeyMissing] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -141,15 +318,23 @@ export default function App() {
       setArticles(arts);
       setDigest(dig);
       if (stat) setStatus(stat);
-    } catch {
+    } catch (err: any) {
+      // Re-throw missing-key errors so the caller can show the block screen
+      if (err?.message && err.message.toLowerCase().includes('groq_api_key')) throw err;
       showToast('Could not reach the backend — is Render awake?');
     }
   }, [activeCategory]);
 
-  // Initial load
+  // Initial load — also detects missing API key
   useEffect(() => {
     setLoading(true);
-    loadAll('all').finally(() => setLoading(false));
+    loadAll('all')
+      .catch((err: Error) => {
+        if (err.message && err.message.toLowerCase().includes('groq_api_key')) {
+          setApiKeyMissing(true);
+        }
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   // Autonomous trigger if empty
@@ -214,17 +399,17 @@ export default function App() {
           }
 
           // Stop ONLY when the backend says it's totally done running, OR it times out heavily
-          if ((stat && stat.status === 'ready' && attempts > 2) || attempts >= 40) {
-            stopPoll();
-            await loadAll('all');
-            setPipelineRunning(false);
-            showToast('✓ Pipeline complete. All topics generated.');
-          }
-        } catch { /* backend may be processing */ }
-      }, 10000);
+            if ((stat && stat.status === 'ready' && attempts > 2) || attempts >= 40) {
+              stopPoll();
+              await loadAll('all');
+              setPipelineRunning(false);
+              showToast('✓ Pipeline complete. All topics generated.');
+            }
+          } catch { /* backend may be processing */ }
+        }, 10000);
 
-    } catch {
-      showToast('Pipeline error — check Render logs.');
+    } catch (e: any) {
+      showToast(e.message || 'Pipeline error — check Render logs.');
       setPipelineRunning(false);
       stopPoll();
     }
@@ -236,6 +421,9 @@ export default function App() {
   const now = new Date().toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   }).toUpperCase();
+
+  // Hard block if key is missing
+  if (apiKeyMissing) return <ApiKeyBlockScreen />;
 
   return (
     <>
@@ -321,6 +509,9 @@ export default function App() {
               ))}
             </div>
 
+            {/* Virlo Feed Intelligence */}
+            {articles.length > 0 && <VirloFeedIntelligence articles={articles} />}
+
             {/* Article grid */}
             <div className="article-grid">
               {loading ? (
@@ -395,6 +586,9 @@ export default function App() {
           onClose={() => setSelectedArticle(null)}
         />
       )}
+
+      {/* ── Feed Conversational Layer ── */}
+      {view === 'feed' && <FeedQAWidget />}
 
       {/* ── Toast ── */}
       {toast && (

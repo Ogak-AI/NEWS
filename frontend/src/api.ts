@@ -61,7 +61,14 @@ const BASE = (() => {
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, options);
-  if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    let errDetail = `${res.statusText}`;
+    try {
+      const err = await res.json();
+      if (err.detail) errDetail = err.detail;
+    } catch {}
+    throw new Error(errDetail);
+  }
   return res.json();
 }
 
@@ -113,3 +120,9 @@ export async function fetchOrbitStatus(orbitId: string): Promise<OrbitResponse |
   }
 }
 
+export const fetchFeedQA = (question: string) =>
+  apiFetch<{ answer: string }>('/feed/qa', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question }),
+  });

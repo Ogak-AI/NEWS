@@ -5,7 +5,8 @@ import datetime
 import os
 import threading
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -85,6 +86,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── API Key Guard ─────────────────────────────────────────────────────────────
+@app.middleware("http")
+async def require_api_key(request: Request, call_next):
+    """Block all /api/* requests if GROQ_API_KEY is not configured."""
+    if request.url.path.startswith("/api"):
+        if not os.getenv("GROQ_API_KEY", "").strip():
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": "missing_api_key",
+                    "detail": (
+                        "GROQ_API_KEY is not configured. "
+                        "Add your free Groq API key to the backend .env file "
+                        "(GROQ_API_KEY=...) and restart the server. "
+                        "Get a free key at https://console.groq.com/keys"
+                    ),
+                },
+            )
+    return await call_next(request)
 
 
 # ── Health — handles both GET (browser) and HEAD (UptimeRobot) ────────────────
@@ -199,6 +221,64 @@ def article_qa(article_id: int, body: QARequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI error: {str(e)[:120]}")
 
+
+# ── Global Feed Q&A ────────────────────────────────────────────────────────────
+@app.post("/api/feed/qa")
+def global_feed_qa(body: QARequest):
+    """Ask the AI reporter a question about the current state of global news."""
+    question = body.question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Question cannot be empty")
+
+    if not os.getenv("GROQ_API_KEY", "").strip():
+        raise HTTPException(status_code=400, detail="GROQ_API_KEY required for Q&A")
+
+    if not ARTICLES:
+        return {"answer": "I haven't reported on any news yet. Wait for the feed to populate."}
+
+    import pipeline as pl
+    client = pl._get_llm_client()
+    if not client:
+        raise HTTPException(status_code=500, detail="LLM client unavailable")
+
+    # Build a context from the digest of current articles
+    context_lines = []
+    for a in sorted(ARTICLES, key=lambda x: x.get("id", 0), reverse=True)[:15]:
+        context_lines.append(f"[{a.get('category', '').upper()}] {a.get('title')}: {a.get('digest')}")
+    
+    feed_context = "\n".join(context_lines)
+
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are the senior editor at Veritas AI looking at the live news desk. "
+                "Answer the reader's question comprehensively but concisely (2–3 sentences) "
+                "based ONLY on the current headlines context provided. "
+                "Do not speculate or hallucinate outside the given feed."
+            )
+        },
+        {
+            "role": "user",
+            "content": (
+                f"CURRENT FEED HEADLINES:\n{feed_context}\n\n"
+                f"Reader question: {question}\n\n"
+                "Answer:"
+            )
+        }
+    ]
+
+    try:
+        response = client.chat.completions.create(
+            model=pl.MODEL_UTILS,
+            messages=messages,
+            max_tokens=400,
+            temperature=0.3,
+        )
+        answer = response.choices[0].message.content.strip()
+        return {"answer": answer}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI error: {str(e)[:120]}")
 
 # ── Virlo Orbit Proxy ────────────────────────────────────────────────────────────
 @app.get("/api/orbit/{orbit_id}")
