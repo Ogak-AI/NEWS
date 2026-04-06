@@ -208,6 +208,28 @@ function SkeletonCard({ featured = false }: { featured?: boolean }) {
     </div>
   );
 }
+// ── Theme Toggle Component ─────────────────────────────────────────
+function ThemeToggle({ theme, toggle }: { theme: string, toggle: () => void }) {
+  return (
+    <button
+      onClick={toggle}
+      className="theme-toggle"
+      aria-label="Toggle theme"
+      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+    >
+      {theme === 'dark' ? (
+        <svg fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 18, height: 18 }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M3 12h2.25m.386-6.364l1.591-1.591M12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" />
+        </svg>
+      ) : (
+        <svg fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 18, height: 18 }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 // ── Live Newsroom Desk (Ticker) ────────────────────────────────────
 function LiveNewsroomDesk() {
   const thoughts = [
@@ -327,6 +349,21 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
+
+  // Theme state
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('veritas-theme') || 'dark';
+  });
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    localStorage.setItem('veritas-theme', next);
+  };
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -480,6 +517,7 @@ export default function App() {
             <button className={`nav-btn ${view === 'about' ? 'active' : ''}`} onClick={() => setView('about')}>
               About
             </button>
+            <ThemeToggle theme={theme} toggle={toggleTheme} />
           </nav>
         </div>
       </header>
