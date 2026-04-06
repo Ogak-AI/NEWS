@@ -2019,3 +2019,68 @@ a:hover { text-decoration: underline; }
   color: var(--text-muted);
   font-weight: 500;
 }
+
+/* ─── Virlo Status Indicators ────────────────────────────────── */
+.status-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulseOpacity 1.5s infinite;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  display: inline-block;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.status-dot[data-status='dispatched'],
+.status-dot[data-status='queued'],
+.status-dot[data-status='processing'] {
+  background: var(--amber);
+  box-shadow: 0 0 10px var(--amber);
+  animation: pulseOpacity 1.5s infinite;
+}
+
+.status-dot[data-status='completed'] {
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+}
+
+.status-dot[data-status='failed'] {
+  background: var(--red);
+  box-shadow: 0 0 10px var(--red);
+}
+
+.v-brand {
+  color: var(--gold) !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 8px rgba(201, 168, 76, 0.2);
+}
+
+.orbit-status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.orbit-intel-blob {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  padding: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  font-style: italic;
+  border-left: 3px solid var(--gold);
+}

@@ -13,25 +13,37 @@ def _get_api_key() -> str | None:
     return key or None
 
 
-def fetch_trending_hashtags(limit: int = 5) -> list[dict]:
-    """Fetches trending hashtags and returns full analytic dicts (hashtag, count, total_views)."""
+def fetch_trending_hashtags(limit: int = 5, platform: str = "global") -> list[dict]:
+    """
+    Fetches trending hashtags. Returns full analytic dicts (hashtag, count, total_views).
+    Optional: pass platform='tiktok', 'youtube', or 'global' (default).
+    """
     key = _get_api_key()
     if not key:
         return []
 
+    endpoint = f"{VIRLO_BASE_URL}/hashtags"
+    if platform != "global":
+        endpoint = f"{VIRLO_BASE_URL}/{platform}/hashtags"
+
     try:
         with httpx.Client(timeout=10.0) as client:
             response = client.get(
-                f"{VIRLO_BASE_URL}/hashtags",
+                endpoint,
                 headers={"Authorization": f"Bearer {key}"},
                 params={"limit": limit, "order_by": "views", "sort": "desc"},
             )
-        response.raise_for_status()
-        payload = response.json()
-        hashtags = payload.get("data", {}).get("hashtags", [])
-        return [h for h in hashtags if isinstance(h, dict)][:limit]
+            
+            if response.status_code == 401:
+                print("    [Virlo] AUTH ERROR: API key is invalid or expired.")
+                return []
+            
+            response.raise_for_status()
+            payload = response.json()
+            hashtags = payload.get("data", {}).get("hashtags", [])
+            return [h for h in hashtags if isinstance(h, dict)][:limit]
     except Exception as exc:
-        print(f"    [Virlo] Trending signal fetch failed: {exc}")
+        print(f"    [Virlo] Trending signal fetch failed ({platform}): {repr(exc)}")
         return []
 
 

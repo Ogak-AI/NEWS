@@ -144,8 +144,15 @@ def generate_article(
 
     trend_context = ""
     if trend_tags:
-        names = [t.get("hashtag", "") for t in trend_tags if isinstance(t, dict)]
-        trend_context = f"\n\nTrending context: {', '.join(names)}."
+        tag_details = [
+            f"#{t.get('hashtag')} ({t.get('total_views', 0)/1e6:.1f}M pulse)" 
+            for t in trend_tags if isinstance(t, dict) and t.get('hashtag')
+        ]
+        trend_context = (
+            f"\n\nVIRLO REAL-TIME SIGNALS:\n"
+            f"The following high-velocity trends are currently peaking on social platforms: {', '.join(tag_details)}.\n"
+            f"Integrate these signals if they provide relevant cultural or strategic context to the report."
+        )
 
     today = _today_str()
 
