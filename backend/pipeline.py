@@ -101,7 +101,7 @@ def validate_facts(client, sources: list, category: str) -> dict:
                 f"- Set contradiction=true if sources directly disagree on this point\n\n"
                 "Return ONLY this JSON:\n"
                 '{"facts": [{"claim": "Specific verifiable statement.", '
-                '"confidence": 0.8, "sources_corroborating": 2, "contradiction": false}]}'
+                '"confidence": 0.8, "sources_corroborating": 2, "contradiction": false, "contested": false}]}'
             )
         }
     ]
@@ -157,6 +157,7 @@ def generate_article(
                 "and The Economist. You write with precision, authority, and narrative clarity. "
                 "Your structure is always inverted pyramid: most important fact first, context second, "
                 "analysis third. You use active voice, short declarative sentences, and no clichés. "
+                "When citing facts, use direct journalistic attribution (e.g., 'Per Reuters latest report...' or 'According to data from NASA...') within the body text. "
                 "Every sentence serves the reader. You never pad or speculate beyond the evidence. "
                 "Return ONLY valid JSON. No preamble, no explanation, no trailing text."
             )
@@ -169,21 +170,21 @@ def generate_article(
                 f"SOURCE MATERIAL:\n{source_texts}{trend_context}\n\n"
                 "STRICT REQUIREMENTS:\n"
                 f"1. TITLE: Specific, informative, 8–14 words. Never vague. No clickbait.\n"
-                f"2. DATELINE: Format exactly as 'CITY, {today} —' (pick the most relevant city).\n"
+                f"2. DATELINE: Format exactly as 'CITY, Country —' (pick the most relevant city and its country).\n"
                 "3. LEDE: One tight sentence, 25–40 words. Who, what, where, when, why. The most important fact first.\n"
                 "4. CONTENT: 500–700 words. Use EXACTLY these markdown section headers:\n"
                 "   ## Background\n"
                 "   (2–3 paragraphs of essential context and history)\n"
                 "   ## Key Developments\n"
                 "   (2–3 paragraphs on what happened, with specific details and figures)\n"
-                "   ## What It Means\n"
-                "   (1–2 paragraphs of analysis, significance, and what happens next)\n"
+                "   ## Strategic Outlook\n"
+                "   (1–2 paragraphs of analysis, long-term significance, and potential future scenarios)\n"
                 "5. PULL QUOTE: The single most powerful, quotable sentence from your article. Stand-alone. No attribution.\n"
                 "6. DIGEST: Exactly two sentences summarising the story for a reader with 15 seconds.\n\n"
                 "Return ONLY this JSON object:\n"
-                '{"title": "...", "dateline": "CITY, ' + today + ' —", '
+                '{"title": "...", "dateline": "CITY, Country —", '
                 '"lede": "...", '
-                '"content": "## Background\\n\\nParagraph...\\n\\n## Key Developments\\n\\nParagraph...\\n\\n## What It Means\\n\\nParagraph...", '
+                '"content": "## Background\\n\\nParagraph...\\n\\n## Key Developments\\n\\nParagraph...\\n\\n## Strategic Outlook\\n\\nParagraph...", '
                 '"digest": "Sentence one. Sentence two.", '
                 '"pull_quote": "The most powerful sentence from the article.", '
                 '"word_count": 550}'

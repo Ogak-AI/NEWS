@@ -38,9 +38,11 @@ function renderMarkdown(md: string): string {
     .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
     .split('\n\n')
     .map(block => {
-      if (block.startsWith('<h') || block.startsWith('<ul')) return block;
       const trimmed = block.trim();
-      return trimmed ? `<p>${trimmed}</p>` : '';
+      if (!trimmed) return '';
+      if (trimmed.startsWith('<h') || trimmed.startsWith('<ul')) return trimmed;
+      if (trimmed.startsWith('## Strategic Outlook')) return `<h2>Strategic Outlook</h2>`;
+      return `<p>${trimmed}</p>`;
     })
     .join('\n');
 }

@@ -348,6 +348,7 @@ export default function App() {
   useEffect(() => {
     if (!loading) {
       fetchArticles(activeCategory).then(setArticles).catch(() => {});
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [activeCategory]); // eslint-disable-line
 
@@ -432,7 +433,7 @@ export default function App() {
         <div className="masthead-inner">
           <div className="masthead-brand" onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>
             <span className="brand-name">VERITAS</span>
-            <span className="brand-sub">AI Intelligence Wire</span>
+            <span className="brand-sub">Neural Newsroom</span>
           </div>
 
           <div className="masthead-center">

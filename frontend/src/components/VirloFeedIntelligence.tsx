@@ -28,9 +28,13 @@ export default function VirloFeedIntelligence({ articles }: Props) {
       <div className="virlo-trends-row">
         {trends.map((t, i) => (
           <div key={i} className="virlo-trend-card">
-            <div className="virlo-trend-name">{t.hashtag}</div>
+            <div className="virlo-trend-info">
+              <span className="virlo-trend-name">#{t.hashtag}</span>
+              <span className="virlo-trend-pulse">↑ Trending</span>
+            </div>
             <div className="virlo-trend-stats">
-              {(t.total_views / 1e6).toFixed(1)}M views
+              <span className="virlo-stat-val">{(t.total_views / 1e6).toFixed(1)}M</span>
+              <span className="virlo-stat-label">reach pulse</span>
             </div>
           </div>
         ))}
