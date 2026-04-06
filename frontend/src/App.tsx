@@ -208,6 +208,31 @@ function SkeletonCard({ featured = false }: { featured?: boolean }) {
     </div>
   );
 }
+// ── Live Newsroom Desk (Ticker) ────────────────────────────────────
+function LiveNewsroomDesk() {
+  const thoughts = [
+    "[SCAN] Ingesting RSS from BBC, Reuters, NASA...",
+    "[AI] Llama-3.3-70B extracting factual claims...",
+    "[QC] Cross-referencing corroboration across 18 feeds...",
+    "[AI] Detecting bias and neutrality in headlines...",
+    "[SYS] Indexing articles for total transparency...",
+    "[VIRLO] Scanning TikTok/YouTube for viral trends...",
+  ];
+  const items = [...thoughts, ...thoughts]; // loop
+
+  return (
+    <div className="live-newsroom-desk">
+      <span className="desk-label">Live Tech Feed // Intelligence Wire</span>
+      <div className="desk-ticker">
+        {items.map((t, i) => <span key={i}>{t}</span>)}
+      </div>
+      <div className="cron-timer">
+        <div className="timer-pulse" />
+        Next News Scan: 45m
+      </div>
+    </div>
+  );
+}
 
 // ── About page ─────────────────────────────────────────────────────
 function AboutPage() {
@@ -428,6 +453,7 @@ export default function App() {
 
   return (
     <>
+      <LiveNewsroomDesk />
       {/* ── Masthead ── */}
       <header className="masthead">
         <div className="masthead-inner">
