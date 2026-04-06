@@ -230,27 +230,56 @@ function ThemeToggle({ theme, toggle }: { theme: string, toggle: () => void }) {
   );
 }
 
-// ── Live Newsroom Desk (Ticker) ────────────────────────────────────
+// ── Live Newsroom Desk (Command Center) ────────────────────────────
 function LiveNewsroomDesk() {
-  const thoughts = [
-    "[SCAN] Ingesting RSS from BBC, Reuters, NASA...",
-    "[AI] Llama-3.3-70B extracting factual claims...",
-    "[QC] Cross-referencing corroboration across 18 feeds...",
-    "[AI] Detecting bias and neutrality in headlines...",
-    "[SYS] Indexing articles for total transparency...",
-    "[VIRLO] Scanning TikTok/YouTube for viral trends...",
+  const events = [
+    { type: 'scan', text: 'Ingesting RSS from 90+ global news wires...' },
+    { type: 'ai',   text: 'Llama-3.3-70B semantic extraction in progress...' },
+    { type: 'qc',   text: 'Cross-verifying claims across 18 independent nodes...' },
+    { type: 'ai',   text: 'Detecting linguistic bias & sentiment markers...' },
+    { type: 'sys',  text: 'Indexing cryptographic provenance records...' },
+    { type: 'scan', text: 'Virlo.ai scanning orbital trend signals...' },
+    { type: 'sys',  text: 'Optimizing vector embeddings for RAG retrieval...' },
   ];
-  const items = [...thoughts, ...thoughts]; // loop
+  
+  const items = [...events, ...events]; // double for infinite loop
 
   return (
     <div className="live-newsroom-desk">
-      <span className="desk-label">Live Tech Feed // Intelligence Wire</span>
-      <div className="desk-ticker">
-        {items.map((t, i) => <span key={i}>{t}</span>)}
+      <div className="desk-label">
+        <span style={{ fontSize: 14 }}>&#9889;</span>
+        <span>Live Tech Feed // Intelligence Wire</span>
       </div>
-      <div className="cron-timer">
-        <div className="timer-pulse" />
-        Next News Scan: 45m
+
+      <div className="desk-ticker-container">
+        <div className="desk-ticker">
+          {items.map((ev, i) => (
+            <div key={i} className="ticker-item">
+              <span className={`event-type type-${ev.type}`}>{ev.type.toUpperCase()}</span>
+              <span className="event-text">{ev.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="desk-stats-group">
+        <div className="desk-stat">
+          <span className="stat-label">Neural Load</span>
+          <span className="stat-value">
+            <span className="stat-pulse" />
+            <span className="stat-val-num">84.2%</span>
+          </span>
+        </div>
+        <div className="desk-stat">
+          <span className="stat-label">Buffer Context</span>
+          <span className="stat-value">
+            <span className="stat-val-num">128k</span>
+          </span>
+        </div>
+        <div className="cron-timer">
+          <div className="timer-pulse" />
+          Next Scan: 45m
+        </div>
       </div>
     </div>
   );
