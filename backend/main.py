@@ -77,6 +77,9 @@ def _load_cache():
             ARTICLES.extend(SEED_ARTICLES)
     return False
 
+# Initialize cache synchronously on module load so SSR fetch never gets empty array
+_load_cache()
+
 def _save_cache():
     try:
         with open(CACHE_FILE, "w") as f:
