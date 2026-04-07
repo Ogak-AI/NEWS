@@ -204,6 +204,33 @@ def get_article(article_id: int):
     return article
 
 
+class OverrideRequest(BaseModel):
+    human_confidence: float
+    editorial_note: str
+
+@app.patch("/api/articles/{article_id}/override")
+def override_article(article_id: int, body: OverrideRequest):
+    """Allows a human editor to override the LLM's confidence scores."""
+    article = next((a for a in ARTICLES if a["id"] == article_id), None)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    if "provenance_metadata" not in article:
+        article["provenance_metadata"] = {}
+
+    article["provenance_metadata"]["human_override"] = {
+        "confidence": body.human_confidence,
+        "note": body.editorial_note,
+        "timestamp": datetime.datetime.utcnow().isoformat()
+    }
+    
+    # Overwrite the aggregate scores to reflect human editorial judgment
+    article["aggregate_confidence"] = body.human_confidence
+    
+    _save_cache()
+    return {"status": "success", "article": article}
+
+
 # ── Article Q&A ────────────────────────────────────────────────────────────────
 class QARequest(BaseModel):
     question: str

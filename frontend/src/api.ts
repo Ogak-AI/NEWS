@@ -34,6 +34,11 @@ export interface ArticleDetail extends ArticleSummary {
     virlo_trend_tags?: { hashtag: string; count: number; total_views: number }[];
     virlo_orbit_id?: string;
     editorial_flags?: string[];
+    human_override?: {
+      confidence: number;
+      note: string;
+      timestamp: string;
+    };
   };
 }
 
@@ -128,4 +133,11 @@ export const fetchFeedQA = (question: string) =>
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question }),
+  });
+
+export const triggerOverride = (id: number, human_confidence: number, editorial_note: string) =>
+  apiFetch<{ status: string; article: ArticleDetail }>(`/articles/${id}/override`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ human_confidence, editorial_note }),
   });

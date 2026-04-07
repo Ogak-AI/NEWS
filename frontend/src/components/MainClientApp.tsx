@@ -8,8 +8,8 @@ import {
   triggerFullPipeline,
   type ArticleSummary, type ArticleDetail, type DigestItem, type PipelineStatus,
 } from '../api';
+import { useRouter } from 'next/navigation';
 import ArticleCard from './ArticleCard';
-import ArticleModal from './ArticleModal';
 import DigestStrip from './DigestStrip';
 import VirloFeedIntelligence from './VirloFeedIntelligence';
 import FeedQAWidget from './FeedQAWidget';
@@ -371,6 +371,7 @@ interface MainClientAppProps {
   initialDigest?: DigestItem[];
   initialStatus?: PipelineStatus | null;
   serverError?: boolean;
+  initialCategory?: string;
 }
 
 // ── Main App ───────────────────────────────────────────────────────
@@ -378,13 +379,14 @@ export default function MainClientApp({
   initialArticles = [],
   initialDigest = [],
   initialStatus = null,
-  serverError = false
+  serverError = false,
+  initialCategory = 'all'
 }: MainClientAppProps) {
+  const router = useRouter();
   const [articles, setArticles] = useState<ArticleSummary[]>(initialArticles);
   const [digest, setDigest] = useState<DigestItem[]>(initialDigest);
   const [status, setStatus] = useState<PipelineStatus | null>(initialStatus);
-  const [selectedArticle, setSelectedArticle] = useState<ArticleDetail | null>(null);
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [view, setView] = useState<View>('feed');
   
   // Since we inject data via SSR, we only need to load if changing categories or polling
@@ -452,31 +454,19 @@ export default function MainClientApp({
     }
   }, [loading, articles.length, pipelineRunning, apiKeyMissing]);
 
-  // Category filter
-  useEffect(() => {
-    // Only load if it's not the initial 'all' payload handled by SSR
-    if (activeCategory !== 'all' || articles.length === 0) {
-      fetchArticles(activeCategory)
-        .then(setArticles)
-        .catch(() => {});
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (activeCategory === 'all' && initialArticles.length > 0 && articles.length === 0) {
-      // Restore initial payload if user clicks 'All Topics' tab and we don't refetch
-       setArticles(initialArticles);
+  // Category filter trigger
+  const handleCategorySwitch = (cat: string) => {
+    setLoading(true);
+    if (cat === 'all') {
+      router.push('/');
+    } else {
+      router.push(`/category/${cat}`);
     }
-  }, [activeCategory]);
+  };
 
-  // Open article modal
+  // Open article
   const openArticle = async (id: number) => {
-    setModalLoading(true);
-    try {
-      const detail = await fetchArticle(id);
-      setSelectedArticle(detail);
-    } catch {
-      showToast('Failed to load article.');
-    } finally {
-      setModalLoading(false);
-    }
+    router.push(`/article/${id}`);
   };
 
   // Stop any running poll
@@ -618,7 +608,7 @@ export default function MainClientApp({
                 <button
                   key={cat}
                   className={`cat-btn ${activeCategory === cat ? 'active' : ''}`}
-                  onClick={() => setActiveCategory(cat)}
+                  onClick={() => handleCategorySwitch(cat)}
                   id={`cat-${cat}`}
                 >
                   {cat === 'all' ? 'All Topics' : cat}
@@ -688,20 +678,12 @@ export default function MainClientApp({
         </div>
       </footer>
 
-      {/* ── Article modal (loading state) ── */}
       {modalLoading && (
         <div className="modal-overlay" style={{ alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-serif)', fontSize: 18 }}>
-            Loading article…
+            Navigating…
           </div>
         </div>
-      )}
-
-      {selectedArticle && !modalLoading && (
-        <ArticleModal
-          article={selectedArticle}
-          onClose={() => setSelectedArticle(null)}
-        />
       )}
 
       {/* ── Feed Conversational Layer ── */}
