@@ -53,8 +53,11 @@ export interface PipelineStatus {
 }
 
 const BASE = (() => {
-  const envBase = import.meta.env.VITE_API_BASE as string | undefined;
-  if (!envBase) return '/api';
+  let envBase: string | undefined;
+  if (typeof process !== 'undefined') {
+    envBase = process.env.API_BASE || process.env.NEXT_PUBLIC_API_BASE;
+  }
+  if (!envBase) envBase = 'http://127.0.0.1:8000';
   const base = envBase.replace(/\/api\/?$/i, '').replace(/\/+$/g, '');
   return `${base}/api`;
 })();
