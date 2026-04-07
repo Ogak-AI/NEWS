@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/src/App.css"],"sourcesContent":["/* App.css — cleared; all styles in index.css */\n\n.status-dot[data-status=\"dispatched\"] { background: var(--amber); }\n.status-dot[data-status=\"completed\"] { background: var(--green); }\n.status-dot[data-status=\"failed\"] { background: var(--red); }\n\n@keyframes status-pulse {\n  0% { opacity: 1; transform: scale(1); }\n  50% { opacity: 0.4; transform: scale(1.1); }\n  100% { opacity: 1; transform: scale(1); }\n}\n\n.status-dot.pulse {\n  animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;\n  box-shadow: 0 0 8px var(--amber);\n}\n\n.orbit-loading-hint {\n  font-family: var(--font-mono);\n  font-size: 10px;\n  color: var(--text-muted);\n  margin-left: 10px;\n  letter-spacing: 0.05em;\n  text-transform: uppercase;\n  opacity: 0.7;\n}\n\n/* ── Article Modal / View ────────────────────────────────────────── */\n"],"names":[],"mappings":"AAEA;;;;AACA;;;;AACA;;;;AAEA;;;;;;;;;;;;;;;;;AAMA;;;;;AAKA"}}]
+}

@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from 'react';
 import type { ArticleDetail, OrbitResponse } from '../api';
 import { fetchOrbitStatus } from '../api';

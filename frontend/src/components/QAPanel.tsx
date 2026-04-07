@@ -1,3 +1,4 @@
+"use client";
 // QAPanel.tsx — "Ask the Reporter" conversational Q&A panel
 import { useState } from 'react';
 import { fetchArticleQA } from '../api';

@@ -1,3 +1,4 @@
+"use client";
 import { useState } from 'react';
 import { triggerOverride, type ArticleDetail } from '../api';
 

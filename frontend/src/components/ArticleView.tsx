@@ -1,3 +1,4 @@
+"use client";
 import type { ArticleDetail } from '../api';
 import DepthMeter from './DepthMeter';
 import ProvenancePanel from './ProvenancePanel';

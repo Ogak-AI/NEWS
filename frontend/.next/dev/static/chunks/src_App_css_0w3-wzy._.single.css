@@ -1,0 +1,46 @@
+/* [project]/src/App.css [app-client] (css) */
+.status-dot[data-status="dispatched"] {
+  background: var(--amber);
+}
+
+.status-dot[data-status="completed"] {
+  background: var(--green);
+}
+
+.status-dot[data-status="failed"] {
+  background: var(--red);
+}
+
+@keyframes status-pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: .4;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.status-dot.pulse {
+  box-shadow: 0 0 8px var(--amber);
+  animation: 2s cubic-bezier(.4, 0, .6, 1) infinite status-pulse;
+}
+
+.orbit-loading-hint {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  opacity: .7;
+  margin-left: 10px;
+  font-size: 10px;
+}
+
+/*# sourceMappingURL=src_App_css_0w3-wzy._.single.css.map*/
