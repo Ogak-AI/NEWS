@@ -1,5 +1,6 @@
 import { fetchArticle } from '../../../api';
 import ArticleView from '../../../components/ArticleView';
+import Navigation from '../../../components/Navigation';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -14,21 +15,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
 
   return (
     <div style={{ padding: '0px', width: '100%', minHeight: '100vh', background: 'var(--bg-deep)' }}>
-      <header className="masthead">
-        <div className="masthead-inner">
-          <div className="masthead-brand">
-            <Link href="/" style={{ color: 'inherit', textDecoration: 'none' }}>
-              <span className="brand-name">VERITAS</span>
-              <span className="brand-sub">Neural Newsroom</span>
-            </Link>
-          </div>
-          <div className="masthead-center">
-             <Link href="/" style={{ color: 'var(--amber)', textDecoration: 'none', fontWeight: 600, fontSize: 13, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-               ← Back to Feed
-             </Link>
-          </div>
-        </div>
-      </header>
+      <Navigation />
       
       <div style={{ padding: '40px', maxWidth: 1400, margin: '0 auto' }}>
         <div 

@@ -1,4 +1,5 @@
 import MainClientApp from '../components/MainClientApp';
+import Navigation from '../components/Navigation';
 import { fetchArticles, fetchDigest, fetchPipelineStatus } from '../api';
 
 export const dynamic = 'force-dynamic'; // Ensures this fetches live datastream each time, bypassing Next cache
@@ -31,11 +32,14 @@ export default async function Page() {
   }
 
   return (
-    <MainClientApp 
+    <div style={{ padding: '0px', width: '100%', minHeight: '100vh', background: 'var(--bg-deep)' }}>
+      <Navigation />
+      <MainClientApp 
       initialArticles={initialArticles}
       initialDigest={initialDigest}
       initialStatus={initialStatus}
       serverError={serverError}
-    />
+      />
+    </div>
   );
 }

@@ -1,1 +1,28 @@
 /* App.css — cleared; all styles in index.css */
+
+.status-dot[data-status="dispatched"] { background: var(--amber); }
+.status-dot[data-status="completed"] { background: var(--green); }
+.status-dot[data-status="failed"] { background: var(--red); }
+
+@keyframes status-pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.status-dot.pulse {
+  animation: status-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  box-shadow: 0 0 8px var(--amber);
+}
+
+.orbit-loading-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ── Article Modal / View ────────────────────────────────────────── */

@@ -1,4 +1,5 @@
 import MainClientApp from '../../../components/MainClientApp';
+import Navigation from '../../../components/Navigation';
 import { fetchArticles, fetchDigest, fetchPipelineStatus } from '../../../api';
 
 export const dynamic = 'force-dynamic';
@@ -30,12 +31,15 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   }
 
   return (
-    <MainClientApp 
+    <div style={{ padding: '0px', width: '100%', minHeight: '100vh', background: 'var(--bg-deep)' }}>
+      <Navigation activeCategory={slug} />
+      <MainClientApp 
       initialArticles={initialArticles}
       initialDigest={initialDigest}
       initialStatus={initialStatus}
       serverError={serverError}
       initialCategory={slug}
-    />
+      />
+    </div>
   );
 }

@@ -2,6 +2,8 @@ import type { ArticleDetail } from '../api';
 import DepthMeter from './DepthMeter';
 import ProvenancePanel from './ProvenancePanel';
 import QAPanel from './QAPanel';
+import EditorialControl from './EditorialControl';
+import { useState } from 'react';
 
 const CAT_STYLES: Record<string, { color: string; bg: string }> = {
   environment: { color: 'var(--cat-environment)', bg: 'rgba(62,207,142,0.08)' },
@@ -51,7 +53,8 @@ function readingTime(wordCount: number, content: string): string {
   return `${mins} min read`;
 }
 
-export default function ArticleView({ article }: { article: ArticleDetail }) {
+export default function ArticleView({ article: initialArticle }: { article: ArticleDetail }) {
+  const [article, setArticle] = useState(initialArticle);
   const cat = (article.category || 'general').toLowerCase();
   const catStyle = CAT_STYLES[cat] || CAT_STYLES.general;
   const rt = readingTime(article.word_count ?? 0, article.content ?? '');
@@ -72,7 +75,7 @@ export default function ArticleView({ article }: { article: ArticleDetail }) {
               {formatTime(article.created_at)}
             </span>
             <span style={{ fontSize: '12px', color: article.provenance_metadata?.human_override ? 'var(--gold)' : 'var(--green)', fontWeight: 600 }}>
-              {article.provenance_metadata?.human_override ? `✦ Human Verified Override` : `✓ ${Math.round((article.aggregate_confidence ?? 0) * 100)}% verified`}
+              {article.provenance_metadata?.human_override ? `✦ Human Verified` : `✓ ${Math.round((article.aggregate_confidence ?? 0) * 100)}% verified`}
             </span>
           </div>
         </div>
@@ -98,6 +101,8 @@ export default function ArticleView({ article }: { article: ArticleDetail }) {
           className="article-content"
           dangerouslySetInnerHTML={{ __html: renderMarkdown(article.content || '') }}
         />
+
+        <EditorialControl article={article} onUpdate={setArticle} />
 
         <div className="provenance-sidebar">
           <div>

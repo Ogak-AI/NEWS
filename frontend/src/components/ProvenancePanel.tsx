@@ -35,28 +35,22 @@ export default function ProvenancePanel({ article }: Props) {
     let attempts = 0;
     const poll = async () => {
       attempts++;
-      const res = await fetchOrbitStatus(orbitId);
-      if (!mounted) return;
-      if (res?.data) {
-        if ((res.data.status === 'queued' || res.data.status === 'dispatched') && attempts >= 3) {
-          // Mock completed for seamless demo UX
-          setOrbit({
-            data: {
-              status: 'completed',
-              intelligence_report: 'Virlo Orbit isolated emerging social momentum matching this article\'s core claims across TikTok and YouTube, demonstrating leading indicator metrics across GenZ and Millennial demographics.',
-              videos: [
-                { title: 'Breaking the latest developments', creator: '@news.pulse.tiktok', views: 2450000 },
-                { title: 'What this means for the industry', creator: 'TechInsiderDaily YouTube', views: 1800000 },
-                { title: 'The hidden angle nobody is talking about', creator: '@viral.analyst', views: 980000 }
-              ]
-            }
-          });
-          return;
+      try {
+        const res = await fetchOrbitStatus(orbitId);
+        if (!mounted) return;
+        
+        if (res?.data) {
+          setOrbit(res);
+          // Stop polling if completed or failed
+          if (res.data.status === 'completed' || res.data.status === 'failed') return;
         }
-        setOrbit(res);
-        if (res.data.status === 'completed' || res.data.status === 'failed') return;
+      } catch (err) {
+        console.error('Orbit poll error:', err);
       }
-      setTimeout(poll, 15000);
+
+      // Exponential backoff: 30s, 45s, 60s... up to 120s
+      const delay = Math.min(15000 + (attempts * 15000), 120000);
+      setTimeout(poll, delay);
     };
     poll();
     return () => { mounted = false; };
@@ -80,28 +74,6 @@ export default function ProvenancePanel({ article }: Props) {
       <div className="prov-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div className="prov-section-title" style={{ marginBottom: 0 }}>Editorial Integrity</div>
-          {!meta?.human_override && (
-            <button 
-              onClick={async () => {
-                setOverrideUpdating(true);
-                try {
-                  const { triggerOverride } = await import('../api');
-                  await triggerOverride(article.id, 1.0, "Manually verified by human Senior Editor.");
-                  window.location.reload(); // Quick refresh to grab new SSR state
-                } catch (e) {
-                  console.error(e);
-                  setOverrideUpdating(false);
-                }
-              }}
-              style={{
-                background: 'none', border: '1px solid var(--border-strong)', color: 'var(--text-secondary)',
-                fontSize: 9, textTransform: 'uppercase', padding: '3px 8px', borderRadius: 4, cursor: 'pointer',
-                opacity: overrideUpdating ? 0.5 : 1
-              }}
-            >
-              {overrideUpdating ? 'Updating...' : 'Override'}
-            </button>
-          )}
         </div>
 
         {meta?.human_override && (
@@ -160,8 +132,11 @@ export default function ProvenancePanel({ article }: Props) {
         <div className="prov-section virlo-orbit-section">
           <div className="prov-section-title v-brand">Orbit AI Discovery</div>
           <div className="orbit-status-line">
-            <span className="status-dot" data-status={orbit?.data?.status || 'dispatched'} />
-            {orbit?.data?.status ? orbit.data.status.toUpperCase() : 'QUEUED'}
+            <span className={`status-dot ${(!orbit || orbit?.data?.status === 'queued' || orbit?.data?.status === 'dispatched') ? 'pulse' : ''}`} data-status={orbit?.data?.status || 'dispatched'} />
+            {orbit?.data?.status ? orbit.data.status.toUpperCase() : 'INITIALIZING...'}
+            {(!orbit || orbit?.data?.status === 'queued' || orbit?.data?.status === 'dispatched') && (
+               <span className="orbit-loading-hint">Searching social signals...</span>
+            )}
           </div>
           
           {orbit?.data?.intelligence_report && (
