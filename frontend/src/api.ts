@@ -14,6 +14,8 @@ export interface ArticleSummary {
   readability_score: number;
   category: string;
   created_at: string;
+  author_byline?: string;
+  hero_image?: string;
 }
 
 export interface ArticleDetail extends ArticleSummary {
@@ -25,6 +27,12 @@ export interface ArticleDetail extends ArticleSummary {
       confidence: number;
       sources_corroborating: number;
       contradiction?: boolean;
+    }>;
+    verification_nodes?: Array<{
+      method: string;
+      status: 'verified' | 'flagged' | 'pending';
+      confidence: number;
+      detail: string;
     }>;
     sources: Array<{
       publisher: string;
