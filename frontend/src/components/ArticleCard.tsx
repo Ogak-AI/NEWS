@@ -63,6 +63,22 @@ export default function ArticleCard({ article, featured = false, onClick }: Prop
       onKeyDown={e => e.key === 'Enter' && onClick()}
       aria-label={`Read article: ${article.title}`}
     >
+      {article.hero_image && (
+        <div style={{
+          height: featured ? 280 : 160,
+          margin: '-24px -24px 16px -24px',
+          backgroundImage: `url(${article.hero_image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          borderTopLeftRadius: 'var(--radius-lg)',
+          borderTopRightRadius: 'var(--radius-lg)',
+          position: 'relative',
+          borderBottom: '1px solid rgba(255,255,255,0.05)'
+        }}>
+           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--bg-card) 0%, transparent 40%)' }} />
+        </div>
+      )}
+
       {/* Top meta row */}
       <div className="card-meta-top">
         <span className="cat-badge" style={{ color: catStyle.color, background: catStyle.bg, borderColor: catStyle.color }}>
@@ -76,10 +92,17 @@ export default function ArticleCard({ article, featured = false, onClick }: Prop
         </div>
       </div>
 
-      {/* Dateline */}
-      {article.dateline && (
-        <div className="card-dateline">{article.dateline}</div>
-      )}
+      {/* Dateline & Byline */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', flexWrap: 'wrap', marginBottom: 12 }}>
+        {article.dateline && (
+          <div className="card-dateline" style={{ marginBottom: 0 }}>{article.dateline}</div>
+        )}
+        {article.author_byline && (
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
+            {article.author_byline}
+          </div>
+        )}
+      </div>
 
       {/* Headline */}
       <h2 className="card-headline">{article.title}</h2>

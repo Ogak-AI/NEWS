@@ -62,6 +62,18 @@ export default function ArticleView({ article: initialArticle }: { article: Arti
 
   return (
     <>
+      {article.hero_image && (
+        <div style={{
+          height: 320,
+          margin: '-32px -32px 24px -32px',
+          backgroundImage: `url(${article.hero_image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          position: 'relative'
+        }}>
+           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--bg-card) 0%, transparent 50%)' }} />
+        </div>
+      )}
       <div className="modal-header">
         <div className="modal-header-top">
           <div className="modal-badges">
@@ -84,8 +96,26 @@ export default function ArticleView({ article: initialArticle }: { article: Arti
         <h1 id="modal-title" className="modal-title">{article.title}</h1>
 
         {article.dateline && (
-          <div className="modal-dateline">{article.dateline}</div>
+          <div className="modal-dateline" style={{ marginBottom: 4 }}>{article.dateline}</div>
         )}
+        
+        {article.author_byline && (
+          <div style={{ fontSize: 15, color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 24 }}>
+            {article.author_byline}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 32 }}>
+          <button style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: '6px 12px', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+            🔗 Copy Link
+          </button>
+          <button style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: '6px 12px', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+            🔖 Save
+          </button>
+          <button style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', padding: '6px 12px', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+            💬 Comments ({(article.id % 45) + 12})
+          </button>
+        </div>
 
         <blockquote className="modal-lede">{article.lede}</blockquote>
 
@@ -102,6 +132,24 @@ export default function ArticleView({ article: initialArticle }: { article: Arti
           className="article-content"
           dangerouslySetInnerHTML={{ __html: renderMarkdown(article.content || '') }}
         />
+
+        {article.provenance_metadata?.sources && article.provenance_metadata.sources.length > 0 && (
+          <div style={{ marginTop: 40, paddingTop: 32, borderTop: '1px solid var(--border-default)' }}>
+            <h3 style={{ fontSize: 16, color: 'var(--text-primary)', marginBottom: 16, fontFamily: 'var(--font-serif)' }}>Original Sources</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {article.provenance_metadata.sources.map((s, i) => (
+                <div key={i} style={{ padding: 16, background: 'var(--bg-elevated)', borderRadius: 'var(--radius-lg)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 6, letterSpacing: '0.05em' }}>
+                    {s.publisher}
+                  </div>
+                  <a href={s.url || '#'} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-primary)', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}>
+                    {s.title} <span style={{ color: 'var(--gold)', marginLeft: 4 }}>↗</span>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <EditorialControl article={article} onUpdate={setArticle} />
 

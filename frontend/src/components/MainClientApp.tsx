@@ -278,7 +278,7 @@ function LiveNewsroomDesk() {
         </div>
         <div className="cron-timer">
           <div className="timer-pulse" />
-          Next Scan: 45m
+          Next Scan: Pending...
         </div>
       </div>
     </div>
@@ -306,6 +306,18 @@ export default function MainClientApp({
   const [status, setStatus] = useState<PipelineStatus | null>(initialStatus);
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState<'newest' | 'confidence' | 'depth'>('newest');
+  const [isVirloModalOpen, setIsVirloModalOpen] = useState(false);
+
+  const processedArticles = articles
+    .filter(a => a.title.toLowerCase().includes(searchQuery.toLowerCase()) || (a.category || '').toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      if (sortOption === 'confidence') return (b.aggregate_confidence || 0) - (a.aggregate_confidence || 0);
+      if (sortOption === 'depth') return (b.depth_meter || 0) - (a.depth_meter || 0);
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
   // Since we inject data via SSR, we only need to load if changing categories or polling
   const [loading, setLoading] = useState(false);
   
@@ -487,22 +499,58 @@ export default function MainClientApp({
       {/* ── Main content ── */}
       <main className="main-layout">
         <>
-            {/* Category tabs */}
-            <div className="category-bar">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  className={`cat-btn ${activeCategory === cat ? 'active' : ''}`}
-                  onClick={() => handleCategorySwitch(cat)}
-                  id={`cat-${cat}`}
+            {/* Category tabs and Filter Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+              <div className="category-bar" style={{ marginBottom: 0 }}>
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat}
+                    className={`cat-btn ${activeCategory === cat ? 'active' : ''}`}
+                    onClick={() => handleCategorySwitch(cat)}
+                    id={`cat-${cat}`}
+                  >
+                    {cat === 'all' ? 'All Topics' : cat}
+                  </button>
+                ))}
+              </div>
+              
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <input 
+                  type="text" 
+                  placeholder="Search coverage..." 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{
+                    background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', 
+                    color: 'var(--text-primary)', padding: '8px 14px', borderRadius: 'var(--radius-md)',
+                    fontSize: 14, minWidth: 200, outline: 'none'
+                  }}
+                />
+                <select 
+                  value={sortOption} 
+                  onChange={e => setSortOption(e.target.value as any)}
+                  style={{
+                    background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', 
+                    color: 'var(--text-primary)', padding: '8px 14px', borderRadius: 'var(--radius-md)',
+                    fontSize: 14, outline: 'none', cursor: 'pointer'
+                  }}
                 >
-                  {cat === 'all' ? 'All Topics' : cat}
+                  <option value="newest">Latest Updates</option>
+                  <option value="confidence">Highest Confidence</option>
+                  <option value="depth">Max Corroboration Depth</option>
+                </select>
+                <button
+                  onClick={() => setIsVirloModalOpen(true)}
+                  style={{
+                    background: 'var(--bg-elevated)', border: '1px solid var(--gold)', 
+                    color: 'var(--gold)', padding: '8px 14px', borderRadius: 'var(--radius-md)',
+                    fontSize: 14, outline: 'none', cursor: 'pointer', fontWeight: 600
+                  }}
+                >
+                  ⚙ Settings
                 </button>
-              ))}
+              </div>
             </div>
-
-            {/* Virlo Feed Intelligence */}
-            {articles.length > 0 && <VirloFeedIntelligence articles={articles} />}
 
             {/* Article grid */}
             <div className="article-grid">
@@ -533,7 +581,7 @@ export default function MainClientApp({
                   </div>
                 </div>
               ) : (
-                articles.map((a, i) => (
+                processedArticles.map((a, i) => (
                   <ArticleCard
                     key={a.id}
                     article={a}
@@ -554,7 +602,7 @@ export default function MainClientApp({
             Every article is AI-generated with full source transparency · {new Date().getFullYear()}
           </span>
           <span className="footer-copy">
-            Sponsored proudly by <a href="https://virlo.ai/?ref=awajiogak" target="_blank" rel="noopener noreferrer" style={{color: 'inherit'}}>Virlo.ai</a>
+            Powered by the Veritas Orbital Pipeline
           </span>
           <span className="footer-copy">
             {status ? `${status.source_count} sources · ${status.article_count} articles` : 'Connecting…'}
@@ -566,6 +614,22 @@ export default function MainClientApp({
         <div className="modal-overlay" style={{ alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-serif)', fontSize: 18 }}>
             Navigating…
+          </div>
+        </div>
+      )}
+
+      {isVirloModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsVirloModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, padding: 32, borderRadius: 'var(--radius-lg)', background: 'var(--bg-card)', border: '1px solid var(--border-default)', zIndex: 1000 }}>
+            <h2 style={{marginTop: 0, fontFamily: 'var(--font-serif)', color: 'var(--text-primary)'}}>Platform Settings</h2>
+            <p style={{color: 'var(--text-muted)', fontSize: 14, marginBottom: 24}}>Manage external API integrations and pipeline extensions.</p>
+            <VirloFeedIntelligence articles={articles} />
+            <button
+               onClick={() => setIsVirloModalOpen(false)}
+               style={{ marginTop: 24, width: '100%', padding: 12, background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)', cursor: 'pointer'}}
+            >
+              Close Settings
+            </button>
           </div>
         </div>
       )}

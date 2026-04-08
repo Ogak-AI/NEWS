@@ -162,6 +162,24 @@ export default function ProvenancePanel({ article }: Props) {
         </div>
       )}
 
+      {/* Verification Nodes Audit Trail */}
+      {meta?.verification_nodes && meta.verification_nodes.length > 0 && (
+        <div className="prov-section">
+          <div className="prov-section-title">Cryptographic Audit Trail</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {meta.verification_nodes.map((node: any, i: number) => (
+              <div key={i} style={{ padding: 12, background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', borderLeft: `3px solid ${node.status === 'verified' ? 'var(--green)' : 'var(--amber)'}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{node.method}</span>
+                  <span style={{ fontSize: 12, color: node.status === 'verified' ? 'var(--green)' : 'var(--amber)', fontWeight: 600, textTransform: 'uppercase' }}>{Math.round(node.confidence * 100)}% {node.status}</span>
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{node.detail}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Source Trail */}
       {sources.length > 0 && (
         <div className="prov-section">
