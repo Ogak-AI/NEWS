@@ -22,17 +22,19 @@ def _get_llm_client():
         return None
     return Groq(api_key=key)
 
-def _call_llm_with_retry(client, model, messages, max_tokens, temperature):
+def _call_llm_with_retry(client, model, messages, max_tokens, temperature, json_mode=True):
     """Wrapper to handle RateLimitErrors with exponential backoff."""
     for attempt in range(4):
         try:
-            return client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                response_format={"type": "json_object"},
-            )
+            request = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            }
+            if json_mode:
+                request["response_format"] = {"type": "json_object"}
+            return client.chat.completions.create(**request)
         except groq.RateLimitError as e:
             if attempt == 3:
                 raise
@@ -40,6 +42,11 @@ def _call_llm_with_retry(client, model, messages, max_tokens, temperature):
             print(f"    [LLM] Rate limit hit on {model}. Retrying in {wait_time}s...")
             time.sleep(wait_time)
         except Exception as e:
+            if json_mode and "json_validate_failed" in str(e):
+                print("    [LLM] JSON mode rejected the response. Retrying without constrained output...")
+                return _call_llm_with_retry(
+                    client, model, messages, max_tokens, temperature, json_mode=False
+                )
             if attempt == 3 or "503" not in str(e):
                 raise
             time.sleep(10)
@@ -208,7 +215,7 @@ def generate_article(
             client=client,
             model=MODEL_ARTICLE,
             messages=messages,
-            max_tokens=4000,
+            max_tokens=6000,
             temperature=0.35,
         )
         raw = response.choices[0].message.content.strip()

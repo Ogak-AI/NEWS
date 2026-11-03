@@ -2,6 +2,7 @@
 virlo.py — Optional Virlo signal enrichment for Veritas AI.
 Uses Virlo trending analytics and Orbit Social Listening to provide social signal context.
 """
+import datetime
 import os
 import httpx
 
@@ -26,12 +27,21 @@ def fetch_trending_hashtags(limit: int = 5, platform: str = "global") -> list[di
     if platform != "global":
         endpoint = f"{VIRLO_BASE_URL}/{platform}/hashtags"
 
+    end_date = datetime.date.today()
+    start_date = end_date - datetime.timedelta(days=30)
+
     try:
         with httpx.Client(timeout=10.0) as client:
             response = client.get(
                 endpoint,
                 headers={"Authorization": f"Bearer {key}"},
-                params={"limit": limit},
+                params={
+                    "limit": limit,
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                    "order_by": "views",
+                    "sort": "desc",
+                },
             )
             
             if response.status_code == 401:
