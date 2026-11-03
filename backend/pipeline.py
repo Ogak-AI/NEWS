@@ -12,8 +12,8 @@ from virlo import fetch_trending_hashtags, dispatch_orbit_search
 
 load_dotenv()
 
-MODEL_ARTICLE = "llama-3.1-8b-instant"
-MODEL_UTILS = "llama-3.1-8b-instant"
+MODEL_ARTICLE = "openai/gpt-oss-120b"
+MODEL_UTILS = "openai/gpt-oss-20b"
 
 
 def _get_llm_client():

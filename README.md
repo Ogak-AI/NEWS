@@ -17,8 +17,8 @@ Veritas AI is an autonomous, AI-native newsroom. It doesn't just aggregate feeds
 - **Frontend**: React, TypeScript, Vite, deployed on **Vercel**.
 - **Backend**: FastAPI (Python), entirely in-memory and stateless, deployed on **Render**.
 - **AI Models**: 
-  - `llama-3.1-8b-instant` for rapid data extraction and bias evaluation.
-  - `llama-3.3-70b-versatile` for elite, world-class journalism generation via **Groq**.
+   - `openai/gpt-oss-20b` for rapid data extraction and bias evaluation via **Groq**.
+   - `openai/gpt-oss-120b` for article generation via **Groq**.
 
 ## 🚀 Live Deployment Instructions
 
