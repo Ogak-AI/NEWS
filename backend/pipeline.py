@@ -218,7 +218,18 @@ def generate_article(
             max_tokens=6000,
             temperature=0.35,
         )
-        raw = response.choices[0].message.content.strip()
+        raw = (response.choices[0].message.content or "").strip()
+        if not raw:
+            print("    [LLM] Empty article response. Retrying once without constrained output...")
+            response = _call_llm_with_retry(
+                client=client,
+                model=MODEL_ARTICLE,
+                messages=messages,
+                max_tokens=6000,
+                temperature=0.35,
+                json_mode=False,
+            )
+            raw = (response.choices[0].message.content or "").strip()
         result = _extract_json(raw)
         # Always compute actual word count from content
         result["word_count"] = len(result.get("content", "").split())

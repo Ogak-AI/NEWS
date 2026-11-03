@@ -50,7 +50,10 @@ def fetch_trending_hashtags(limit: int = 5, platform: str = "global") -> list[di
             
             response.raise_for_status()
             payload = response.json()
-            hashtags = payload.get("data", {}).get("hashtags", [])
+            data = payload.get("data", [])
+            hashtags = data.get("hashtags", []) if isinstance(data, dict) else data
+            if not isinstance(hashtags, list):
+                return []
             return [h for h in hashtags if isinstance(h, dict)][:limit]
     except Exception as exc:
         print(f"    [Virlo] Trending signal fetch failed ({platform}): {repr(exc)}")
