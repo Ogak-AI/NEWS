@@ -31,7 +31,7 @@ def fetch_trending_hashtags(limit: int = 5, platform: str = "global") -> list[di
             response = client.get(
                 endpoint,
                 headers={"Authorization": f"Bearer {key}"},
-                params={"limit": limit, "order_by": "views", "sort": "desc"},
+                params={"limit": limit},
             )
             
             if response.status_code == 401:

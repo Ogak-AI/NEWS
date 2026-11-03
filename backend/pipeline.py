@@ -27,7 +27,11 @@ def _call_llm_with_retry(client, model, messages, max_tokens, temperature):
     for attempt in range(4):
         try:
             return client.chat.completions.create(
-                model=model, messages=messages, max_tokens=max_tokens, temperature=temperature
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                response_format={"type": "json_object"},
             )
         except groq.RateLimitError as e:
             if attempt == 3:
