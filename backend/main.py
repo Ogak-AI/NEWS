@@ -505,11 +505,14 @@ SEED_ARTICLES = [
     }
 ]
 
+SEED_ARTICLE_IDS = {article["id"] for article in SEED_ARTICLES}
+
 CACHE_FILE = "/tmp/veritas_cache.json"
 import json
 
 def _load_cache():
     global ARTICLES, SOURCES
+    has_generated_articles = False
     try:
         if os.path.exists(CACHE_FILE):
             with open(CACHE_FILE, "r") as f:
@@ -518,13 +521,16 @@ def _load_cache():
                 ARTICLES.extend(data.get("articles", []))
                 SOURCES.clear()
                 SOURCES.extend(data.get("sources", []))
+                has_generated_articles = any(
+                    article.get("id") not in SEED_ARTICLE_IDS for article in ARTICLES
+                )
                 
         # If cache is empty or failed, inject high-quality Seed Articles
         if len(ARTICLES) == 0:
             print("[Boot] Cache empty. Injecting Seed Articles for reliability.")
             ARTICLES.extend(SEED_ARTICLES)
             
-        return True
+        return has_generated_articles
     except Exception as exc:
         print(f"[Boot] Cache load failed: {exc}")
         if len(ARTICLES) == 0:
@@ -557,7 +563,7 @@ def _boot_pipeline():
         print("[Boot] Auto-warming: RSS ingestion...")
         ingestion.ingest_all(SOURCES)
         print("[Boot] Auto-warming: AI pipeline...")
-        pipeline.run_pipeline(SOURCES, ARTICLES)
+        pipeline.run_pipeline(SOURCES, ARTICLES, SEED_ARTICLE_IDS)
         _save_cache()
         print("[Boot] Warm-up complete.")
     except Exception as exc:
@@ -878,7 +884,7 @@ def _run_articles_only():
     PIPELINE_RUNNING = True
     try:
         import pipeline
-        pipeline.run_pipeline(SOURCES, ARTICLES)
+        pipeline.run_pipeline(SOURCES, ARTICLES, SEED_ARTICLE_IDS)
         _save_cache()
     finally:
         PIPELINE_RUNNING = False
@@ -906,7 +912,7 @@ def _run_full_pipeline():
         print("\n[Full Pipeline] Phase 1: RSS ingestion...")
         ingestion.ingest_all(SOURCES)
         print("[Full Pipeline] Phase 2: AI editorial pipeline...")
-        pipeline.run_pipeline(SOURCES, ARTICLES)
+        pipeline.run_pipeline(SOURCES, ARTICLES, SEED_ARTICLE_IDS)
         _save_cache()
         print("[Full Pipeline] Complete.")
     finally:

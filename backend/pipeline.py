@@ -328,10 +328,16 @@ def _process_category(
 
 
 # ── Main Pipeline Runner ───────────────────────────────────────────────────────
-def run_pipeline(in_memory_sources: list, in_memory_articles: list):
+def run_pipeline(
+    in_memory_sources: list,
+    in_memory_articles: list,
+    seed_article_ids: set[int] | None = None,
+):
     """Run the full editorial pipeline over in-memory sources (categories in parallel)."""
     import threading
     from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    seed_article_ids = seed_article_ids or set()
 
     client = _get_llm_client()
     if not client:
@@ -361,7 +367,10 @@ def run_pipeline(in_memory_sources: list, in_memory_articles: list):
     pending = [
         (cat, srcs)
         for cat, srcs in by_category.items()
-        if not any(a.get("category") == cat for a in in_memory_articles)
+        if not any(
+            a.get("category") == cat and a.get("id") not in seed_article_ids
+            for a in in_memory_articles
+        )
     ]
 
     if not pending:
